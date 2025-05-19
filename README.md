@@ -109,9 +109,9 @@ Navigate to http://localhost:3000
 Project Structure
 apolone-curator/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes
-│   ├── auth/              # Authentication pages
-│   ├── dashboard/         # Protected dashboard pages
+│  ├── api/               # API routes
+│  ├── auth/              # Authentication pages
+│  ├── dashboard/         # Protected dashboard pages
 │   └── layout.tsx         # Root layout
 ├── components/            # Reusable UI components
 │   ├── ui/               # Base UI components (buttons, inputs, etc.)
