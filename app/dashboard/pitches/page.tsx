@@ -3,21 +3,21 @@
 import { useState, useEffect, useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { PitchCard } from "@/components/pitch-card"
 import { StatusFilter } from "@/components/status-filter"
 import { CreatePlaylistModal } from "@/components/create-playlist-modal"
 import { EditPlaylistModal, type PlaylistData } from "@/components/edit-playlist-modal"
 import Link from "next/link"
-import { Check, Clock, ListMusic, Loader2, Music, RefreshCw, X } from "lucide-react"
+import { ListMusic, Loader2, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
+import { Button } from "@/components/ui/button"
 import type { DeclineFeedback } from "@/components/decline-pitch-modal"
+import { PlacementPitchCard } from "@/components/placement-pitch-card"
 
 // Update the status options to include "pitched" instead of "pending"
 type StatusOption = "all" | "pitched" | "accepted" | "declined"
-type PlacementStatusOption = "all" | "accepted" | "placed" | "closed" | "pending" | "ended"
+type PlacementStatusOption = "all" | "accepted" | "placed"
 
 // Define interfaces for our data
 interface Genre {
@@ -100,23 +100,6 @@ interface EnhancedPitch {
     genres: { name: string; isMatch?: boolean }[]
   }[]
   artwork?: string
-}
-
-// Campaign group for display
-interface CampaignGroup {
-  id: number
-  trackName: string
-  artistName: string
-  artwork: string
-  placements: {
-    id: number
-    status: string
-    playlistName: string
-    playlistId: number
-    placedAt?: string
-    removedAt?: string
-    daysRemaining?: number
-  }[]
 }
 
 export default function PitchesPage() {
@@ -352,7 +335,7 @@ export default function PitchesPage() {
 
       // Get unique campaign IDs from pitches or create some if none exist
       const uniqueCampaignIds = [...new Set(enhancedPitches.map((pitch) => pitch.campaigns_id))]
-      const demoStatuses = ["accepted", "placed", "closed"]
+      const demoStatuses = ["accepted", "placed"]
 
       // If we have campaigns, create placements for them
       if (uniqueCampaignIds.length > 0) {
@@ -379,7 +362,6 @@ export default function PitchesPage() {
               playlists_id: playlistId,
               status: status,
               placedAt: status === "placed" ? new Date().toISOString() : undefined,
-              removedAt: status === "closed" ? new Date().toISOString() : undefined,
               trackName: pitch.trackName,
               artistName: pitch.artistName,
               playlistName: playlist ? playlist.playlistName : `Demo Playlist ${j + 1}`,
@@ -393,6 +375,7 @@ export default function PitchesPage() {
         // If no campaigns exist, create some demo ones
         for (let i = 0; i < 3; i++) {
           const campaignId = 1000 + i
+          const pitchId = 6000 + i
 
           // Create placements with different statuses for this demo campaign
           for (let j = 0; j < demoStatuses.length; j++) {
@@ -402,11 +385,10 @@ export default function PitchesPage() {
 
             demoPlacements.push({
               id: 4000 + i * 10 + j,
-              pitches_id: 5000 + i,
+              pitches_id: pitchId,
               playlists_id: playlistId,
               status: status,
               placedAt: status === "placed" ? new Date().toISOString() : undefined,
-              removedAt: status === "closed" ? new Date().toISOString() : undefined,
               trackName: `Demo Track ${i + 1}`,
               artistName: `Demo Artist ${i + 1}`,
               playlistName: playlist ? playlist.playlistName : `Demo Playlist ${j + 1}`,
@@ -414,6 +396,31 @@ export default function PitchesPage() {
               daysRemaining: status === "placed" ? 30 - j : undefined,
               campaigns_id: campaignId,
             })
+
+            // Also create a corresponding pitch with the same status
+            if (!enhancedPitches.some((p) => p.id === pitchId)) {
+              enhancedPitches.push({
+                id: pitchId,
+                campaigns_id: campaignId,
+                curators_id: Number(user.id),
+                playlists_id: [playlistId],
+                status: status,
+                submissionDate: new Date().toISOString(),
+                trackName: `Demo Track ${i + 1}`,
+                artistName: `Demo Artist ${i + 1}`,
+                trackUrl: "https://open.spotify.com/track/17phhZDn6oGtzMe56NuWvj",
+                genre_id: 1,
+                subgenre_ids: [],
+                associatedPlaylists: [
+                  {
+                    id: playlistId,
+                    name: playlist ? playlist.playlistName : `Demo Playlist ${j + 1}`,
+                    genres: [{ name: "Demo Genre", isMatch: true }],
+                  },
+                ],
+                artwork: artworkImages[i % artworkImages.length],
+              })
+            }
           }
         }
       }
@@ -624,90 +631,97 @@ export default function PitchesPage() {
     })
   }, [validPitches, statusFilter])
 
-  // Group placements by campaign ID
-  const campaignGroups = useMemo(() => {
-    console.log("Grouping placements by campaign ID", placements)
+  // Get pitches with status "accepted" or "placed" for the Placements tab
+  const placementPitches = useMemo(() => {
+    // Filter pitches to only include those with status "accepted" or "placed"
+    return pitches.filter((pitch) => pitch.status === "accepted" || pitch.status === "placed")
+  }, [pitches])
 
-    // Filter placements based on status filter
+  // Group placements by pitch ID
+  const pitchPlacements = useMemo(() => {
+    console.log("Preparing pitch placements for display", placementPitches)
+
+    // First, ensure we only use pitches with status "accepted" or "placed"
+    const validPitchIds = placementPitches.map((pitch) => pitch.id)
+
+    // Filter placements to only include those associated with valid pitches
+    const validPlacements = placements.filter(
+      (placement) =>
+        validPitchIds.includes(placement.pitches_id) &&
+        (placement.status === "accepted" || placement.status === "placed"),
+    )
+
+    console.log("Valid placements for accepted/placed pitches:", validPlacements)
+
+    // Apply additional filter based on user selection
     const filteredPlacements =
-      placementStatusFilter === "all" ? placements : placements.filter((p) => p.status === placementStatusFilter)
+      placementStatusFilter === "all"
+        ? validPlacements
+        : validPlacements.filter((p) => p.status === placementStatusFilter)
 
     console.log("Filtered placements:", filteredPlacements)
 
-    // Group by campaign ID
-    const groupedByCampaign = filteredPlacements.reduce(
-      (acc, placement) => {
-        // Skip placements without campaigns_id
-        if (!placement.campaigns_id) {
-          console.log("Skipping placement without campaigns_id:", placement)
-          return acc
+    // Transform into pitch placement objects
+    const pitchPlacementsList = validPitchIds
+      .map((pitchId) => {
+        // Find the corresponding pitch
+        const pitch = placementPitches.find((p) => p.id === pitchId)
+
+        if (!pitch) {
+          console.log(`No pitch found for ID ${pitchId}`)
+          return null
         }
 
-        if (!acc[placement.campaigns_id]) {
-          acc[placement.campaigns_id] = []
+        // Filter by status if needed
+        if (placementStatusFilter !== "all" && pitch.status !== placementStatusFilter) {
+          return null
         }
 
-        acc[placement.campaigns_id].push(placement)
-        return acc
-      },
-      {} as Record<number, Placement[]>,
-    )
-
-    console.log("Grouped placements:", groupedByCampaign)
-
-    // Transform into campaign groups
-    const groups = Object.entries(groupedByCampaign)
-      .map(([campaignId, campaignPlacements]) => {
-        // Get campaign details
-        const campaign = campaigns.find((c) => c.id === Number(campaignId))
-        const firstPlacement = campaignPlacements[0]
+        // Get associated playlists directly from the pitch data
+        const associatedPlaylists = pitch.associatedPlaylists.map((playlist) => ({
+          id: playlist.id,
+          name: playlist.name,
+        }))
 
         return {
-          id: Number(campaignId),
-          trackName: campaign?.trackName || firstPlacement.trackName || "Unknown Track",
-          artistName: campaign?.artistName || firstPlacement.artistName || "Unknown Artist",
-          artwork: firstPlacement.artwork || "/placeholder.svg",
-          placements: campaignPlacements.map((p) => ({
-            id: p.id,
-            status: p.status,
-            playlistName: p.playlistName || "Unknown Playlist",
-            playlistId: p.playlists_id,
-            placedAt: p.placedAt,
-            removedAt: p.removedAt,
-            daysRemaining: p.daysRemaining,
-          })),
+          id: pitchId,
+          trackName: pitch.trackName,
+          artistName: pitch.artistName,
+          artwork: pitch.artwork || "/placeholder.svg",
+          status: pitch.status,
+          submissionDate: pitch.submissionDate,
+          spotifyUrl: pitch.trackUrl || "",
+          playlists: associatedPlaylists,
+          campaignId: pitch.campaigns_id,
         }
       })
+      .filter(Boolean) // Remove null entries
       .sort((a, b) => {
-        // Sort by status priority: accepted first, then placed, then closed
-        const getStatusPriority = (group: CampaignGroup) => {
-          if (group.placements.some((p) => p.status === "accepted")) return 0
-          if (group.placements.some((p) => p.status === "placed")) return 1
-          return 2
-        }
+        // Sort by status priority: accepted first, then placed
+        if (a.status === "accepted" && b.status !== "accepted") return -1
+        if (a.status !== "accepted" && b.status === "accepted") return 1
 
-        return getStatusPriority(a) - getStatusPriority(b)
+        // Then sort by submission date (newest first)
+        return new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime()
       })
 
-    console.log("Campaign groups:", groups)
-    return groups
-  }, [placements, campaigns, placementStatusFilter])
+    console.log("Final pitch placements list:", pitchPlacementsList)
+    return pitchPlacementsList
+  }, [placementPitches, placements, placementStatusFilter])
 
   // Handle confirm placement
   const handleConfirmPlacement = async (id: number) => {
     try {
-      console.log("Confirming placement for ID:", id)
+      console.log("Confirming placement for pitch ID:", id)
 
-      // Find the placement to get its details
-      const placement = placements.find((p) => p.id === id)
-      if (!placement) {
-        throw new Error("Placement not found")
+      // Find the pitch
+      const pitch = pitches.find((p) => p.id === id)
+      if (!pitch) {
+        throw new Error("Pitch not found")
       }
 
-      console.log("Found placement:", placement)
-
       // Update the pitch status in the database
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/pitches/${placement.pitches_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/pitches/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -724,28 +738,42 @@ export default function PitchesPage() {
         throw new Error("Failed to update pitch status")
       }
 
-      // Also update the placement status
-      const placementResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/placements/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "placed",
-          placedAt: new Date().toISOString(),
-        }),
-      })
+      // Also update all placements for this pitch
+      const pitchPlacements = placements.filter((p) => p.pitches_id === id)
 
-      if (!placementResponse.ok) {
-        const errorText = await placementResponse.text()
-        console.error("API error response for placement update:", errorText)
-        throw new Error("Failed to update placement status")
+      for (const placement of pitchPlacements) {
+        const placementResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/placements/${placement.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "placed",
+            placedAt: new Date().toISOString(),
+          }),
+        })
+
+        if (!placementResponse.ok) {
+          console.error(`Failed to update placement ${placement.id}`)
+        }
       }
 
-      // Update local state
-      setPlacements((prev) =>
+      // Update local state - update the pitch
+      setPitches((prev) =>
         prev.map((p) =>
           p.id === id
+            ? {
+                ...p,
+                status: "placed",
+              }
+            : p,
+        ),
+      )
+
+      // Update local state - update all placements for this pitch
+      setPlacements((prev) =>
+        prev.map((p) =>
+          p.pitches_id === id
             ? {
                 ...p,
                 status: "placed",
@@ -753,18 +781,6 @@ export default function PitchesPage() {
                 daysRemaining: 30,
               }
             : p,
-        ),
-      )
-
-      // Update the pitch status in local state
-      setPitches((prev) =>
-        prev.map((pitch) =>
-          pitch.id === placement.pitches_id
-            ? {
-                ...pitch,
-                status: "placed",
-              }
-            : pitch,
         ),
       )
 
@@ -788,18 +804,16 @@ export default function PitchesPage() {
   // Handle remove from playlist
   const handleRemoveFromPlaylist = async (id: number) => {
     try {
-      console.log("Removing from playlist for ID:", id)
+      console.log("Removing from playlist for pitch ID:", id)
 
-      // Find the placement to get its details
-      const placement = placements.find((p) => p.id === id)
-      if (!placement) {
-        throw new Error("Placement not found")
+      // Find the pitch
+      const pitch = pitches.find((p) => p.id === id)
+      if (!pitch) {
+        throw new Error("Pitch not found")
       }
 
-      console.log("Found placement:", placement)
-
       // Update the pitch status in the database
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/pitches/${placement.pitches_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/pitches/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -816,46 +830,48 @@ export default function PitchesPage() {
         throw new Error("Failed to update pitch status")
       }
 
-      // Also update the placement status
-      const placementResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/placements/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "closed",
-          removedAt: new Date().toISOString(),
-        }),
-      })
+      // Also update all placements for this pitch
+      const pitchPlacements = placements.filter((p) => p.pitches_id === id)
 
-      if (!placementResponse.ok) {
-        const errorText = await placementResponse.text()
-        console.error("API error response for placement update:", errorText)
-        throw new Error("Failed to update placement status")
+      for (const placement of pitchPlacements) {
+        const placementResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/placements/${placement.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "closed",
+            removedAt: new Date().toISOString(),
+          }),
+        })
+
+        if (!placementResponse.ok) {
+          console.error(`Failed to update placement ${placement.id}`)
+        }
       }
 
-      // Update local state
-      setPlacements((prev) =>
+      // Update local state - update the pitch
+      setPitches((prev) =>
         prev.map((p) =>
           p.id === id
+            ? {
+                ...p,
+                status: "closed",
+              }
+            : p,
+        ),
+      )
+
+      // Update local state - update all placements for this pitch
+      setPlacements((prev) =>
+        prev.map((p) =>
+          p.pitches_id === id
             ? {
                 ...p,
                 status: "closed",
                 removedAt: new Date().toISOString(),
               }
             : p,
-        ),
-      )
-
-      // Update the pitch status in local state
-      setPitches((prev) =>
-        prev.map((pitch) =>
-          pitch.id === placement.pitches_id
-            ? {
-                ...pitch,
-                status: "closed",
-              }
-            : pitch,
         ),
       )
 
@@ -1089,57 +1105,6 @@ export default function PitchesPage() {
     }
   }
 
-  // Handle placement actions
-  const handleEndPlacement = async (id: number) => {
-    try {
-      // Update the placement status in the database
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/placements/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "ended",
-          endDate: new Date().toISOString(),
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to update placement status")
-      }
-
-      // Update local state
-      setPlacements((prev) =>
-        prev.map((placement) =>
-          placement.id === id
-            ? {
-                ...placement,
-                status: "ended",
-                endDate: new Date().toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }),
-              }
-            : placement,
-        ),
-      )
-
-      // Show success toast
-      toast({
-        title: "Placement Ended",
-        description: "The track has been removed from the playlist.",
-      })
-    } catch (error) {
-      console.error("Error ending placement:", error)
-      toast({
-        title: "Error",
-        description: "Failed to end placement. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
   // Handle playlist creation
   const handlePlaylistCreated = (playlistData: any) => {
     // Refresh data to get the newly created playlist
@@ -1285,8 +1250,8 @@ export default function PitchesPage() {
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle>Active Placements</CardTitle>
-                <CardDescription>Manage your accepted and placed tracks</CardDescription>
+                <CardTitle>Placements</CardTitle>
+                <CardDescription>Track and manage your playlist placements</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 <StatusFilter
@@ -1307,114 +1272,135 @@ export default function PitchesPage() {
                     <div key={index} className="h-24 rounded-lg bg-gray-100 animate-pulse"></div>
                   ))}
                 </div>
-              ) : placements.filter((p) => p.status === "accepted" || p.status === "placed").length === 0 ? (
+              ) : pitchPlacements.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    No active placements found. Accepted or placed pitches will appear here.
-                  </p>
+                  <p className="text-muted-foreground">No placements found with the selected filter.</p>
+
+                  {/* Debug information */}
+                  <div className="mt-4 p-4 bg-gray-50 rounded-md text-left text-xs">
+                    <h4 className="font-bold mb-2">Debug Information:</h4>
+                    <p>Total Pitches: {pitches.length}</p>
+                    <p>Accepted/Placed Pitches: {placementPitches.length}</p>
+                    <p>Total Placements: {placements.length}</p>
+                    <p>Status Filter: {placementStatusFilter}</p>
+                    <p>
+                      Pitch Status Counts:{" "}
+                      {Object.entries(
+                        pitches.reduce(
+                          (acc, p) => {
+                            acc[p.status] = (acc[p.status] || 0) + 1
+                            return acc
+                          },
+                          {} as Record<string, number>,
+                        ),
+                      )
+                        .map(([status, count]) => `${status}: ${count}`)
+                        .join(", ")}
+                    </p>
+                    <div className="mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          // Force create demo data
+                          const demoPitches = []
+                          const demoPlacements = []
+
+                          for (let i = 0; i < 3; i++) {
+                            const campaignId = 1000 + i
+                            const pitchId = 6000 + i
+                            const statuses = ["accepted", "placed"]
+
+                            // Create a pitch for each status
+                            const status = statuses[i % statuses.length]
+
+                            // Create the pitch if it doesn't exist
+                            if (!pitches.some((p) => p.id === pitchId)) {
+                              demoPitches.push({
+                                id: pitchId,
+                                campaigns_id: campaignId,
+                                curators_id: Number(user.id),
+                                playlists_id: [i + 1, i + 2],
+                                status: status,
+                                submissionDate: new Date().toISOString(),
+                                trackName: `Demo Track ${i + 1}`,
+                                artistName: `Demo Artist ${i + 1}`,
+                                trackUrl: "https://open.spotify.com/track/17phhZDn6oGtzMe56NuWvj",
+                                genre_id: 1,
+                                subgenre_ids: [],
+                                associatedPlaylists: [
+                                  {
+                                    id: i + 1,
+                                    name: `Demo Playlist ${i + 1}`,
+                                    genres: [{ name: "Demo Genre", isMatch: true }],
+                                  },
+                                  {
+                                    id: i + 2,
+                                    name: `Demo Playlist ${i + 2}`,
+                                    genres: [{ name: "Demo Genre", isMatch: true }],
+                                  },
+                                ],
+                                artwork: artworkImages[i % artworkImages.length],
+                              })
+                            }
+
+                            // Create placements for each playlist
+                            for (let j = 0; j < 2; j++) {
+                              const playlistId = i + j + 1
+
+                              demoPlacements.push({
+                                id: 5000 + i * 10 + j,
+                                pitches_id: pitchId,
+                                playlists_id: playlistId,
+                                status: status,
+                                placedAt: status === "placed" ? new Date().toISOString() : undefined,
+                                trackName: `Demo Track ${i + 1}`,
+                                artistName: `Demo Artist ${i + 1}`,
+                                playlistName: `Demo Playlist ${playlistId}`,
+                                artwork: artworkImages[i % artworkImages.length],
+                                daysRemaining: status === "placed" ? 30 - j : undefined,
+                                campaigns_id: campaignId,
+                              })
+                            }
+                          }
+
+                          // Update state with new demo data
+                          setPitches((prev) => [...prev, ...demoPitches])
+                          setPlacements((prev) => [...prev, ...demoPlacements])
+
+                          toast({
+                            title: "Demo Data Created",
+                            description: "Created demo pitches and placements for testing",
+                          })
+                        }}
+                      >
+                        Create Demo Data
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {placements
-                    .filter((p) => p.status === "accepted" || p.status === "placed")
-                    .map((placement) => (
-                      <div key={placement.id} className="relative border rounded-lg bg-white shadow-sm p-6">
-                        {/* Status badge in the top right corner */}
-                        <div className="absolute top-4 right-4">
-                          <Badge
-                            variant="outline"
-                            className={`px-3 py-1 text-sm font-medium rounded-full ${
-                              placement.status === "accepted"
-                                ? "bg-blue-50 text-blue-700 border-blue-200"
-                                : "bg-green-50 text-green-700 border-green-200"
-                            }`}
-                          >
-                            {placement.status === "accepted" ? "Accepted" : "Placed"}
-                          </Badge>
-                        </div>
-
-                        {/* Track header section with artwork and basic info */}
-                        <div className="flex items-start gap-4 mb-6">
-                          <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden">
-                            <img
-                              src={placement.artwork || "/placeholder.svg?height=64&width=64&query=music"}
-                              alt={`${placement.trackName} by ${placement.artistName}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0 pr-24">
-                            <h3 className="text-xl font-semibold truncate">{placement.trackName}</h3>
-                            <p className="text-gray-600 text-base mb-1">{placement.artistName}</p>
-                            <p className="text-sm text-gray-500">
-                              {placement.status === "placed" && placement.placedAt
-                                ? `Placed on: ${new Date(placement.placedAt).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  })}`
-                                : `Accepted on: ${new Date(placement.placementDate || new Date()).toLocaleDateString(
-                                    "en-US",
-                                    {
-                                      year: "numeric",
-                                      month: "long",
-                                      day: "numeric",
-                                    },
-                                  )}`}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Playlist section */}
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                          <div className="flex items-center mb-3">
-                            <Music className="h-4 w-4 text-primary mr-2" />
-                            <h4 className="text-sm font-medium">Playlist</h4>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge
-                              variant="outline"
-                              className="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-700"
-                            >
-                              {placement.playlistName}
-                            </Badge>
-                          </div>
-
-                          {/* Placement details */}
-                          {placement.status === "placed" && placement.placedAt && (
-                            <div className="mt-3 flex items-center gap-2">
-                              <Clock className="h-3.5 w-3.5 text-primary" />
-                              <Badge variant="outline" className="bg-secondary/20 text-primary border-secondary">
-                                {placement.daysRemaining || 30}d remaining
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex justify-end gap-3">
-                          {placement.status === "accepted" && (
-                            <Button
-                              className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-white flex items-center gap-1"
-                              onClick={() => handleConfirmPlacement(placement.id)}
-                            >
-                              <Check className="h-4 w-4" />
-                              Confirm Placement
-                            </Button>
-                          )}
-
-                          {placement.status === "placed" && (
-                            <Button
-                              variant="outline"
-                              className="px-4 py-2 text-sm flex items-center gap-1 border-red-200 text-red-700 hover:bg-red-50"
-                              onClick={() => handleRemoveFromPlaylist(placement.id)}
-                            >
-                              <X className="h-4 w-4" />
-                              Remove from Playlist
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                  {pitchPlacements.map((pitch) => (
+                    <PlacementPitchCard
+                      key={pitch.id}
+                      id={pitch.id}
+                      artwork={pitch.artwork}
+                      trackName={pitch.trackName}
+                      artistName={pitch.artistName}
+                      status={pitch.status as "accepted" | "placed" | "closed"}
+                      submissionDate={new Date(pitch.submissionDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                      spotifyUrl={pitch.spotifyUrl}
+                      playlists={pitch.playlists}
+                      campaignId={pitch.campaignId}
+                      onConfirmPlacement={handleConfirmPlacement}
+                      onRemoveFromPlaylist={handleRemoveFromPlaylist}
+                    />
+                  ))}
                 </div>
               )}
             </CardContent>

@@ -1,13 +1,13 @@
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { authService, type User, type LoginCredentials, type SignupCredentials } from "@/lib/auth-service"
 import { useToast } from "@/hooks/use-toast"
+import { authService, type LoginCredentials, type SignupCredentials, type User } from "@/lib/auth-service"
+import { usePathname, useRouter } from "next/navigation"
+import type React from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 
 // Import the redirect debug utilities
-import { logRedirectAttempt, detectRedirectLoop } from "@/lib/redirect-debug"
+import { detectRedirectLoop, logRedirectAttempt } from "@/lib/redirect-debug"
 
 interface AuthContextType {
   user: User | null
@@ -144,6 +144,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "You have successfully logged in",
       })
 
+      // Refresh user data (fetch current user) before redirecting
+      await refreshUser()
+
       // Enhanced redirection
       console.log("Redirecting to dashboard...")
       safeRedirect("/dashboard/pitches")
@@ -208,6 +211,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Account created",
         description: "Your account has been successfully created",
       })
+
+      // Refresh user data (fetch current user) before redirecting
+      await refreshUser()
 
       // Enhanced redirection
       console.log("Redirecting to dashboard...")

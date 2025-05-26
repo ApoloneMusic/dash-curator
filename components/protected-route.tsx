@@ -2,10 +2,10 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { debugAuth } from "@/lib/auth-debug"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -42,6 +42,23 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       if (pathname.includes("/auth/login")) {
         console.log("Already on login page, not redirecting")
         return
+      }
+
+      // If a token exists (even if invalid), clear it (remove from localStorage and cookie) and then redirect
+      let token = null
+      try {
+        token = localStorage.getItem("auth_token")
+      } catch (e) {
+        console.warn("Error reading localStorage:", e)
+      }
+      if (token) {
+        console.log("Token exists but user not authenticated, clearing token")
+        try {
+          localStorage.removeItem("auth_token")
+          document.cookie = "auth_token=; path=/; max-age=0"
+        } catch (e) {
+          console.warn("Error clearing token:", e)
+        }
       }
 
       // Simplified redirection approach
