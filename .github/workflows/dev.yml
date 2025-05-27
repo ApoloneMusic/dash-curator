@@ -1,0 +1,25 @@
+name: Deploy to Preview
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Install Global CLI Tools
+        run: npm install -g vercel pnpm
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Link to Vercel Project
+        run: vercel link --yes --project ${{ secrets.VERCEL_PROJECT_NAME }} --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: Deploy to Vercel (Preview)
+        id: vercel_deploy
+        run: vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ secrets.VERCEL_ORG_ID }} --target=preview  --yes --prod=false
