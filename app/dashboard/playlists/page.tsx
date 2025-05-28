@@ -378,7 +378,7 @@ export default function PlaylistsPage() {
         playlist.artwork ||
         fallbackArtworkImages[playlist.id % fallbackArtworkImages.length],
       followers: playlist.saves,
-      tracks: Math.floor(Math.random() * 50) + 10, // Random number of tracks for demo
+      tracks: playlist.tracks ?? 0, // Random number of tracks for demo
       status: playlist.status,
       description: playlist.description,
       genres: genreNames,
