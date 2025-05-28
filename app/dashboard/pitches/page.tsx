@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CreatePlaylistModal } from "@/components/create-playlist-modal";
+import type { DeclineFeedback } from "@/components/decline-pitch-modal";
+import {
+  EditPlaylistModal,
+  type PlaylistData,
+} from "@/components/edit-playlist-modal";
+import { PitchCard } from "@/components/pitch-card";
+import { PlacementPitchCard } from "@/components/placement-pitch-card";
+import { StatusFilter } from "@/components/status-filter";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,22 +17,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PitchCard } from "@/components/pitch-card";
-import { StatusFilter } from "@/components/status-filter";
-import { CreatePlaylistModal } from "@/components/create-playlist-modal";
-import {
-  EditPlaylistModal,
-  type PlaylistData,
-} from "@/components/edit-playlist-modal";
-import Link from "next/link";
-import { ListMusic, Loader2, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth-context";
-import { Button } from "@/components/ui/button";
-import type { DeclineFeedback } from "@/components/decline-pitch-modal";
-import { PlacementPitchCard } from "@/components/placement-pitch-card";
+import { useToast } from "@/hooks/use-toast";
+import { ListMusic, Loader2, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
-type StatusOption = "all" | "placed" | "accepted" | "declined" | "pitched";
+export type PitchStatusOption =
+  | "all"
+  | "placed"
+  | "accepted"
+  | "declined"
+  | "pitched";
 type PlacementStatusOption = "all" | "accepted" | "placed";
 
 // Define interfaces for our data
@@ -57,8 +62,11 @@ interface Pitch {
   playlists_id: number[]; // Changed to array to support multiple playlists
   status: string;
   matchScore: number;
-  submissionDate: string;
+  created_at: string;
   feedback?: string;
+  acceptedAt?: number;
+  placedAt?: number;
+  removedAt?: number;
 }
 
 interface Playlist {
@@ -70,23 +78,6 @@ interface Playlist {
   genres: number[];
   subgenres: number[];
   status: string;
-}
-
-interface Placement {
-  id: number;
-  pitches_id: number;
-  playlists_id: number;
-  status: string;
-  placedAt?: string;
-  removedAt?: string;
-  placementDate?: string;
-  endDate?: string;
-  daysRemaining?: number;
-  trackName?: string;
-  artistName?: string;
-  playlistName?: string;
-  artwork?: string;
-  campaigns_id?: number;
 }
 
 // Enhanced pitch data for display
@@ -108,11 +99,18 @@ interface EnhancedPitch {
     genres: { name: string; isMatch?: boolean }[];
   }[];
   artwork?: string;
+  acceptedAt?: number;
+  placedAt?: number;
+  removedAt?: number;
+}
+
+export interface EnhancedPlacement extends EnhancedPitch {
+  daysRemaining?: number;
 }
 
 export default function PitchesPage() {
   const [activeTab, setActiveTab] = useState("pitches");
-  const [statusFilter, setStatusFilter] = useState<StatusOption>("all");
+  const [statusFilter, setStatusFilter] = useState<PitchStatusOption>("all");
   const [placementStatusFilter, setPlacementStatusFilter] =
     useState<PlacementStatusOption>("all");
   const [createPlaylistOpen, setCreatePlaylistOpen] = useState(false);
@@ -125,14 +123,12 @@ export default function PitchesPage() {
 
   // State for data
   const [pitches, setPitches] = useState<EnhancedPitch[]>([]);
-  const [placements, setPlacements] = useState<Placement[]>([]);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [subgenres, setSubgenres] = useState<Subgenre[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  // const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  // const [debugInfo, setDebugInfo] = useState<any>({});
 
   // Sample artwork images for demonstration
   const artworkImages = [
@@ -159,15 +155,17 @@ export default function PitchesPage() {
       const [
         pitchesResponse,
         campaignsResponse,
-        placementsResponse,
         playlistsResponse,
         genresResponse,
         subgenresResponse,
       ] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/pitches`),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/pitches?curators_id=${user.id}`
+        ),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/campaigns`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/placements`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/playlists`),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/playlists?curators_id=${user.id}`
+        ),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/genre`),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/subgenre`),
       ]);
@@ -175,7 +173,7 @@ export default function PitchesPage() {
       // Parse JSON responses and ensure they're arrays
       const pitchesData = await pitchesResponse.json();
       const campaignsData = await campaignsResponse.json();
-      const placementsData = await placementsResponse.json();
+      // const placementsData = await placementsResponse.json();
       const playlistsData = await playlistsResponse.json();
       const genresData = await genresResponse.json();
       const subgenresData = await subgenresResponse.json();
@@ -183,195 +181,126 @@ export default function PitchesPage() {
       console.log("Raw API responses:", {
         pitches: pitchesData,
         campaigns: campaignsData,
-        placements: placementsData,
+        // placements: placementsData,
         playlists: playlistsData,
         genres: genresData,
         subgenres: subgenresData,
       });
 
       // Ensure all data is in array format
-      const pitchesArray = Array.isArray(pitchesData)
+      const pitchesArray: any[] = Array.isArray(pitchesData)
         ? pitchesData
         : pitchesData.data || [];
-      const campaignsArray = Array.isArray(campaignsData)
+      const campaignsArray: any[] = Array.isArray(campaignsData)
         ? campaignsData
         : campaignsData.data || [];
-      const placementsArray = Array.isArray(placementsData)
-        ? placementsData
-        : placementsData.data || [];
-      const playlistsArray = Array.isArray(playlistsData)
+      // const placementsArray = Array.isArray(placementsData)
+      //   ? placementsData
+      //   : placementsData.data || [];
+      const playlistsArray: any[] = Array.isArray(playlistsData)
         ? playlistsData
         : playlistsData.data || [];
-      const genresArray = Array.isArray(genresData)
+      const genresArray: any[] = Array.isArray(genresData)
         ? genresData
         : genresData.data || [];
-      const subgenresArray = Array.isArray(subgenresData)
+      const subgenresArray: any[] = Array.isArray(subgenresData)
         ? subgenresData
         : subgenresData.data || [];
 
       // Store campaigns for later use
-      setCampaigns(campaignsArray);
-
-      // Filter pitches by curator ID
-      const curatorId = Number(user.id);
-      const curatorPitches = pitchesArray.filter(
-        (pitch: Pitch) => pitch.curators_id === curatorId
-      );
+      // setCampaigns(campaignsArray);
 
       // Enhance pitches with campaign and playlist data
-      const enhancedPitches = curatorPitches.map((pitch: Pitch) => {
-        // Get associated campaign
-        const campaign = campaignsArray.find(
-          (c: Campaign) => c.id === pitch.campaigns_id
-        ) || {
-          trackName: "Unknown Track",
-          artistName: "Unknown Artist",
-          trackUrl: "",
-          genre_id: 0,
-          subgenre_id: [],
-        };
+      const enhancedPitches: EnhancedPitch[] = pitchesArray.map(
+        (pitch: Pitch) => {
+          // Get associated campaign
+          const campaign = campaignsArray.find(
+            (c: Campaign) => c.id === pitch.campaigns_id
+          ) || {
+            trackName: "Unknown Track",
+            artistName: "Unknown Artist",
+            trackUrl: "",
+            genre_id: 0,
+            subgenre_id: [],
+          };
 
-        // Ensure playlists_id is an array
-        const playlistIds = Array.isArray(pitch.playlists_id)
-          ? pitch.playlists_id
-          : pitch.playlists_id
-          ? [pitch.playlists_id]
-          : [];
+          // Ensure playlists_id is an array
+          const playlistIds = Array.isArray(pitch.playlists_id)
+            ? pitch.playlists_id
+            : pitch.playlists_id
+            ? [pitch.playlists_id]
+            : [];
 
-        // Get associated playlists
-        const associatedPlaylists = playlistIds
-          .map((playlistId) => {
-            const playlist = playlistsArray.find(
-              (p: Playlist) => p.id === playlistId
-            );
-
-            if (!playlist) return null;
-
-            // Map playlist genres to objects with names
-            const playlistGenres = (playlist.genres || []).map((genreId) => {
-              const genre = genresArray.find((g) => g.id === genreId);
-              return {
-                name: genre ? genre.name : `Genre ${genreId}`,
-                isMatch: campaign.genre_id === genreId,
-              };
-            });
-
-            return {
-              id: playlist.id,
-              name: playlist.playlistName,
-              genres:
-                playlistGenres.length > 0
-                  ? playlistGenres
-                  : [{ name: "No genres", isMatch: false }],
-            };
-          })
-          .filter(Boolean); // Remove null entries
-
-        // Ensure subgenre_id is an array and filter out any null/undefined values
-        const subgenreIds = Array.isArray(campaign.subgenre_id)
-          ? campaign.subgenre_id.filter(Boolean)
-          : campaign.subgenre_id
-          ? [campaign.subgenre_id]
-          : [];
-
-        return {
-          id: pitch.id,
-          campaigns_id: pitch.campaigns_id,
-          curators_id: pitch.curators_id,
-          playlists_id: playlistIds,
-          status: pitch.status,
-          submissionDate: pitch.submissionDate || new Date().toISOString(),
-          trackName: campaign.trackName,
-          artistName: campaign.artistName,
-          trackUrl: campaign.trackUrl,
-          genre_id: campaign.genre_id,
-          subgenre_ids: subgenreIds,
-          associatedPlaylists: associatedPlaylists,
-          // Assign a random artwork for demo purposes
-          artwork: artworkImages[pitch.id % artworkImages.length],
-        };
-      });
-
-      // Create placements from accepted and placed pitches if no placements exist
-      let enhancedPlacements = [];
-
-      // First, check if we have any placements in the API response
-      if (placementsArray.length) {
-        // Process existing placements from API
-        enhancedPlacements = placementsArray
-          .filter((placement: Placement) => {
-            // Find the associated pitch
-            const pitch = pitchesArray.find(
-              (p: Pitch) => p.id === placement.pitches_id
-            );
-            // Check if the pitch belongs to this curator
-            return pitch && pitch.curators_id === curatorId;
-          })
-          .map((placement: Placement) => {
-            const pitch = pitchesArray.find(
-              (p: Pitch) => p.id === placement.pitches_id
-            );
-            const campaign = pitch
-              ? campaignsArray.find(
-                  (c: Campaign) => c.id === pitch.campaigns_id
-                )
-              : null;
-            const playlist = playlistsArray.find(
-              (p: Playlist) => p.id === placement.playlists_id
-            );
-
-            // Calculate days remaining for placed pitches
-            let daysRemaining = 30;
-            if (placement.status === "placed" && placement.placedAt) {
-              const placedDate = new Date(placement.placedAt);
-              const endDate = new Date(placedDate);
-              endDate.setDate(endDate.getDate() + 30);
-              const now = new Date();
-              const diffTime = endDate.getTime() - now.getTime();
-              daysRemaining = Math.max(
-                0,
-                Math.floor(diffTime / (1000 * 60 * 60 * 24))
+          // Get associated playlists
+          const associatedPlaylists = playlistIds
+            .map((playlistId) => {
+              const playlist = playlistsArray.find(
+                (p: Playlist) => p.id === playlistId
               );
-            }
 
-            return {
-              ...placement,
-              trackName: campaign ? campaign.trackName : "Unknown Track",
-              artistName: campaign ? campaign.artistName : "Unknown Artist",
-              playlistName: playlist
-                ? playlist.playlistName
-                : "Unknown Playlist",
-              // Assign a random artwork for demo purposes
-              artwork: campaign
-                ? artworkImages[pitch.id % artworkImages.length]
-                : "/placeholder.svg",
-              daysRemaining,
-              campaigns_id: pitch ? pitch.campaigns_id : undefined, // Add campaigns_id to the placement
-            };
-          });
-      }
+              if (!playlist) return null;
 
-      // Combine real and demo placements
-      enhancedPlacements = [...enhancedPlacements];
+              // Map playlist genres to objects with names
+              const playlistGenres = (playlist.genres || []).map(
+                (genreId: any) => {
+                  const genre = genresArray.find((g: any) => g.id === genreId);
+                  return {
+                    name: genre ? genre.name : `Genre ${genreId}`,
+                    isMatch: campaign.genre_id === genreId,
+                  };
+                }
+              );
 
-      console.log("Enhanced placements:", enhancedPlacements);
+              return {
+                id: playlist.id,
+                name: playlist.playlistName,
+                genres:
+                  playlistGenres.length > 0
+                    ? playlistGenres
+                    : [{ name: "No genres", isMatch: false }],
+              };
+            })
+            .filter(
+              (
+                playlist
+              ): playlist is {
+                id: number;
+                name: string;
+                genres: { name: string; isMatch?: boolean }[];
+              } => playlist !== null
+            );
 
-      // Store debug info for troubleshooting
-      setDebugInfo({
-        pitchesCount: enhancedPitches.length,
-        placementsCount: enhancedPlacements.length,
-        uniqueCampaignIds: [
-          ...new Set(enhancedPlacements.map((p) => p.campaigns_id)),
-        ].filter(Boolean),
-        placementStatuses: enhancedPlacements.map((p) => p.status),
-        hasCampaignsId: enhancedPlacements.every(
-          (p) => p.campaigns_id !== undefined
-        ),
-      });
+          // Ensure subgenre_id is an array and filter out any null/undefined values
+          const subgenreIds = Array.isArray(campaign.subgenre_id)
+            ? campaign.subgenre_id.filter(Boolean)
+            : campaign.subgenre_id
+            ? [campaign.subgenre_id]
+            : [];
+
+          return {
+            id: pitch.id,
+            campaigns_id: pitch.campaigns_id,
+            curators_id: pitch.curators_id,
+            playlists_id: playlistIds,
+            status: pitch.status,
+            submissionDate: pitch.created_at || new Date().toISOString(),
+            trackName: campaign.trackName,
+            artistName: campaign.artistName,
+            trackUrl: campaign.trackUrl,
+            genre_id: campaign.genre_id,
+            subgenre_ids: subgenreIds,
+            associatedPlaylists: associatedPlaylists,
+            // Assign a random artwork for demo purposes
+            artwork: artworkImages[pitch.id % artworkImages.length],
+            acceptedAt: pitch.acceptedAt,
+            placedAt: pitch.placedAt,
+            removedAt: pitch.removedAt,
+          };
+        }
+      );
 
       setPitches(enhancedPitches);
-      setPlacements(enhancedPlacements);
-      setPlaylists(playlistsArray);
+      // setPlaylists(playlistsArray);
       setGenres(genresArray);
       setSubgenres(subgenresArray);
 
@@ -507,7 +436,7 @@ export default function PitchesPage() {
               const foundGenre = genres.find((g) => g.name === genre.name);
               return foundGenre?.id;
             })
-            .filter(Boolean)
+            .filter((id) => id != null)
       );
 
       // Map genre and subgenre IDs to objects with names and match status
@@ -575,6 +504,7 @@ export default function PitchesPage() {
         : validPitches.filter((pitch) => pitch.status === statusFilter);
     // Then sort to prioritize pitched pitches
     return [...filtered].sort((a, b) => {
+      if (!a || !b) return 0;
       // If we're not filtering, put pitched first
       if (statusFilter === "all") {
         if (a.status === "pitched" && b.status !== "pitched") return -1;
@@ -590,66 +520,34 @@ export default function PitchesPage() {
   }, [validPitches, statusFilter]);
 
   // Get pitches with status "accepted" or "placed" for the Placements tab
-  const placementPitches = useMemo(() => {
-    // Filter pitches to only include those with status "accepted" or "placed"
-    return pitches.filter(
-      (pitch) => pitch.status === "accepted" || pitch.status === "placed"
-    );
-  }, [pitches]);
 
-  // Group placements by pitch ID
-  const pitchPlacements = useMemo(() => {
-    console.log("Preparing pitch placements for display", placementPitches);
-
-    // First, ensure we only use pitches with status "accepted" or "placed"
-    const validPitchIds = placementPitches.map((pitch) => pitch.id);
-    // Filter placements to only include those associated with valid pitches
-    const validPlacements = placements.filter(
-      (placement) =>
-        validPitchIds.includes(placement.pitches_id) &&
-        (placement.status === "placed" || placement.status === "accepted")
-    );
-
-    // Apply additional filter based on user selection
-    const filteredPlacements =
-      placementStatusFilter === "all"
-        ? validPlacements
-        : validPlacements.filter((p) => p.status === placementStatusFilter);
-
-    // console.log("Filtered placements:", filteredPlacements);
-
-    // Transform into pitch placement objects
-    const pitchPlacementsList = validPitchIds
-      .map((pitchId) => {
-        // Find the corresponding pitch
-        const pitch = placementPitches.find((p) => p.id === pitchId);
-
-        if (!pitch) {
-          return null;
+  const pitchPlacements: EnhancedPlacement[] = useMemo(() => {
+    return pitches
+      .filter(
+        (pitch) => pitch.status === "accepted" || pitch.status === "placed"
+      )
+      .map((pitch) => {
+        // Calculate days remaining for placed pitches
+        let daysRemaining = 30;
+        if (pitch.status === "placed" && pitch.placedAt) {
+          const placedDate = new Date(pitch.placedAt);
+          const endDate = new Date(placedDate);
+          endDate.setDate(endDate.getDate() + 30);
+          const now = new Date();
+          const diffTime = endDate.getTime() - now.getTime();
+          daysRemaining = Math.max(
+            0,
+            Math.floor(diffTime / (1000 * 60 * 60 * 24))
+          );
         }
 
-        // Get associated playlists directly from the pitch data
-        const associatedPlaylists = pitch.associatedPlaylists.map(
-          (playlist) => ({
-            id: playlist.id,
-            name: playlist.name,
-          })
-        );
-
         return {
-          id: pitchId,
-          trackName: pitch.trackName,
-          artistName: pitch.artistName,
-          artwork: pitch.artwork || "/placeholder.svg",
-          status: pitch.status,
-          submissionDate: pitch.submissionDate,
-          spotifyUrl: pitch.trackUrl || "",
-          playlists: associatedPlaylists,
-          campaignId: pitch.campaigns_id,
+          ...pitch,
+          daysRemaining,
         };
       })
-      .filter(Boolean) // Remove null entries
       .sort((a, b) => {
+        if (!a || !b) return 0;
         // Sort by status priority: accepted first, then placed
         if (a.status === "accepted" && b.status !== "accepted") return -1;
         if (a.status !== "accepted" && b.status === "accepted") return 1;
@@ -660,10 +558,7 @@ export default function PitchesPage() {
           new Date(a.submissionDate).getTime()
         );
       });
-
-    console.log("Final pitch placements list:", pitchPlacementsList);
-    return pitchPlacementsList;
-  }, [placementPitches, placements, placementStatusFilter]);
+  }, [pitches]);
 
   // Handle confirm placement
   const handleConfirmPlacement = async (id: number) => {
@@ -671,11 +566,6 @@ export default function PitchesPage() {
       console.log("Confirming placement for pitch ID:", id);
 
       // Find the pitch
-      const selectedPlacements = placements.filter((p) => p.pitches_id === id);
-      if (!selectedPlacements.length) {
-        throw new Error("Placement not found");
-      }
-
       const pitch = pitches.find((p) => p.id === id);
       if (!pitch) {
         throw new Error("Pitch not found");
@@ -699,40 +589,6 @@ export default function PitchesPage() {
         );
       }
 
-      const placementPromises = selectedPlacements.map(async (placementObj) => {
-        try {
-          const updatePlacementResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/placements/${placementObj.id}`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                ...placementObj,
-                status: "placed",
-                placedAt: new Date().toISOString(),
-              }),
-            }
-          );
-
-          if (!updatePlacementResponse.ok) {
-            console.error(`Failed to update placement ${placement.id}`);
-          }
-          return await updatePlacementResponse.json();
-        } catch (placementError) {
-          console.error(
-            `Error creating placement for playlist ${playlistId}:`,
-            placementError
-          );
-          // Continue with other placements even if one fails
-          return null;
-        }
-      });
-
-      const placementResults = await Promise.all(placementPromises);
-      const successfulPlacements = placementResults.filter(Boolean);
-
       // Update local state - update the pitch
       setPitches((prev) =>
         prev.map((p) =>
@@ -740,19 +596,6 @@ export default function PitchesPage() {
             ? {
                 ...p,
                 status: "placed",
-              }
-            : p
-        )
-      );
-
-      // Update local state - update all placements for this pitch
-      setPlacements((prev) =>
-        prev.map((p) =>
-          p.pitches_id === id
-            ? {
-                ...p,
-                status: "placed",
-                placedAt: new Date().toISOString(),
               }
             : p
         )
@@ -861,29 +704,6 @@ export default function PitchesPage() {
         throw new Error("Failed to update pitch status");
       }
 
-      // Also update all placements for this pitch
-      const pitchPlacements = placements.filter((p) => p.pitches_id === id);
-
-      for (const placement of pitchPlacements) {
-        const placementResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/placements/${placement.id}`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              status: "closed",
-              removedAt: new Date().toISOString(),
-            }),
-          }
-        );
-
-        if (!placementResponse.ok) {
-          console.error(`Failed to update placement ${placement.id}`);
-        }
-      }
-
       // Update local state - update the pitch
       setPitches((prev) =>
         prev.map((p) =>
@@ -891,19 +711,6 @@ export default function PitchesPage() {
             ? {
                 ...p,
                 status: "closed",
-              }
-            : p
-        )
-      );
-
-      // Update local state - update all placements for this pitch
-      setPlacements((prev) =>
-        prev.map((p) =>
-          p.pitches_id === id
-            ? {
-                ...p,
-                status: "closed",
-                removedAt: new Date().toISOString(),
               }
             : p
         )
@@ -1128,71 +935,8 @@ export default function PitchesPage() {
         "Pitch updated successfully, now creating placements for each selected playlist"
       );
 
-      // Create a new placement in the database for each playlist
-      const placementPromises = playlists_id.map(async (playlistId) => {
-        try {
-          const placementResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/placements`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                pitches_id: pitchId,
-                playlists_id: playlistId,
-                status: "accepted", // Changed from "pending" to "accepted"
-                createdAt: new Date().toISOString(),
-                campaigns_id: acceptedPitch.campaigns_id, // Include campaigns_id,
-                curators_id: user?.id,
-              }),
-            }
-          );
-
-          if (!placementResponse.ok) {
-            const placementErrorText = await placementResponse.text();
-            console.error(
-              `Placement API Error for playlist ${playlistId}:`,
-              placementErrorText
-            );
-            throw new Error(
-              `Failed to create placement: ${placementResponse.status} ${placementResponse.statusText}`
-            );
-          }
-
-          return await placementResponse.json();
-        } catch (placementError) {
-          console.error(
-            `Error creating placement for playlist ${playlistId}:`,
-            placementError
-          );
-          // Continue with other placements even if one fails
-          return null;
-        }
-      });
-
-      const placementResults = await Promise.all(placementPromises);
-      const successfulPlacements = placementResults.filter(Boolean);
-
       // Update local state
       refreshData();
-
-      // Add to placements with enhanced data
-      setPlacements((prev) => [
-        ...prev,
-        ...successfulPlacements.map((newPlacement) => ({
-          ...newPlacement,
-          trackName: acceptedPitch.trackName,
-          artistName: acceptedPitch.artistName,
-          playlistName:
-            acceptedPitch.associatedPlaylists.find(
-              (p) => p.id === newPlacement.playlists_id
-            )?.name || "Unknown Playlist",
-          artwork: acceptedPitch.artwork,
-          status: "accepted", // Ensure status is set to "accepted"
-          campaigns_id: acceptedPitch.campaigns_id, // Include campaigns_id
-        })),
-      ]);
 
       // Show success toast
       toast({
@@ -1266,8 +1010,7 @@ export default function PitchesPage() {
       <Tabs
         defaultValue="pitches"
         className="w-full"
-        onValueChange={setActiveTab}
-      >
+        onValueChange={setActiveTab}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <TabsList className="grid w-full md:w-[600px] grid-cols-2">
             <TabsTrigger value="pitches" className="tab-animation">
@@ -1283,8 +1026,7 @@ export default function PitchesPage() {
             size="sm"
             onClick={refreshData}
             disabled={isRefreshing}
-            className="mt-4 md:mt-0 flex items-center gap-1"
-          >
+            className="mt-4 md:mt-0 flex items-center gap-1">
             {isRefreshing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -1297,8 +1039,7 @@ export default function PitchesPage() {
         <div className="mt-4 flex justify-end">
           <Link
             href="/dashboard/playlists"
-            className="flex items-center text-sm font-medium text-primary hover:underline"
-          >
+            className="flex items-center text-sm font-medium text-primary hover:underline">
             <ListMusic className="mr-2 h-4 w-4" />
             View Your Playlists
           </Link>
@@ -1317,7 +1058,9 @@ export default function PitchesPage() {
               <div className="flex items-center gap-2">
                 <StatusFilter
                   selectedStatus={statusFilter}
-                  onStatusChange={setStatusFilter}
+                  onStatusChange={(status) =>
+                    setStatusFilter(status as PitchStatusOption)
+                  }
                   statusOptions={[
                     { value: "all", label: "All Pitches" },
                     { value: "placed", label: "Placed" },
@@ -1334,8 +1077,7 @@ export default function PitchesPage() {
                   {[1, 2, 3].map((_, index) => (
                     <div
                       key={index}
-                      className="h-64 rounded-lg bg-gray-100 animate-pulse"
-                    ></div>
+                      className="h-64 rounded-lg bg-gray-100 animate-pulse"></div>
                   ))}
                 </div>
               ) : filteredPitches.length === 0 ? (
@@ -1411,8 +1153,7 @@ export default function PitchesPage() {
                   {[1, 2, 3].map((_, index) => (
                     <div
                       key={index}
-                      className="h-24 rounded-lg bg-gray-100 animate-pulse"
-                    ></div>
+                      className="h-24 rounded-lg bg-gray-100 animate-pulse"></div>
                   ))}
                 </div>
               ) : pitchPlacements.length === 0 ? (
@@ -1425,8 +1166,8 @@ export default function PitchesPage() {
                   <div className="mt-4 p-4 bg-gray-50 rounded-md text-left text-xs">
                     <h4 className="font-bold mb-2">Debug Information:</h4>
                     <p>Total Pitches: {pitches.length}</p>
-                    <p>Accepted/Placed Pitches: {placementPitches.length}</p>
-                    <p>Total Placements: {placements.length}</p>
+                    <p>Accepted/Placed Pitches: {pitchPlacements.length}</p>
+                    <p>Total Placements: {pitchPlacements.length}</p>
                     <p>Status Filter: {placementStatusFilter}</p>
                     <p>
                       Pitch Status Counts:{" "}
@@ -1535,24 +1276,10 @@ export default function PitchesPage() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {pitchPlacements.map((pitch) => (
+                  {pitchPlacements.map((placement) => (
                     <PlacementPitchCard
-                      key={pitch.id}
-                      id={pitch.id}
-                      artwork={pitch.artwork}
-                      trackName={pitch.trackName}
-                      artistName={pitch.artistName}
-                      status={pitch.status as "accepted" | "placed" | "closed"}
-                      submissionDate={new Date(
-                        pitch.submissionDate
-                      ).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                      spotifyUrl={pitch.spotifyUrl}
-                      playlists={pitch.playlists}
-                      campaignId={pitch.campaignId}
+                      key={placement.id}
+                      placement={placement}
                       onConfirmPlacement={handleConfirmPlacement}
                       onRemoveFromPlaylist={handleRemoveFromPlaylist}
                     />

@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Check, Clock, Music, X } from "lucide-react"
-import { ConfirmPlacementModal } from "./confirm-placement-modal"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Check, Clock, Music, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ConfirmPlacementModal } from "./confirm-placement-modal";
 
 interface PlacementCardProps {
-  id: number
-  artwork: string
-  trackName: string
-  artistName: string
-  playlistName: string
-  status: "accepted" | "placed" | "closed" | "pending" | "ended"
-  placedAt?: string
-  removedAt?: string
-  daysRemaining?: number
-  onConfirmPlacement?: (id: number) => void
-  onRemoveFromPlaylist?: (id: number) => void
-  placementDate?: string
-  endDate?: string
+  id: number;
+  artwork?: string;
+  trackName: string;
+  artistName: string;
+  playlistName: string;
+  status: "accepted" | "placed" | "closed" | "pending";
+  placedAt?: string;
+  removedAt?: string;
+  daysRemaining?: number;
+  onConfirmPlacement?: (id: number) => void;
+  onRemoveFromPlaylist?: (id: number) => void;
+  placementDate?: string;
+  endDate?: string;
 }
 
 export function PlacementCard({
@@ -34,47 +34,48 @@ export function PlacementCard({
   daysRemaining = 30,
   onConfirmPlacement,
   onRemoveFromPlaylist,
-  placementDate,
+  // placementDate,
   endDate,
 }: PlacementCardProps) {
-  const [remainingDays, setRemainingDays] = useState(daysRemaining)
-  const [remainingHours, setRemainingHours] = useState(0)
-  const [confirmPlacementOpen, setConfirmPlacementOpen] = useState(false)
-  const [confirmRemovalOpen, setConfirmRemovalOpen] = useState(false)
+  const [remainingDays, setRemainingDays] = useState(daysRemaining);
+  const [remainingHours, setRemainingHours] = useState(0);
+  const [confirmPlacementOpen, setConfirmPlacementOpen] = useState(false);
+  const [confirmRemovalOpen, setConfirmRemovalOpen] = useState(false);
 
   // Calculate remaining time for placed placements
   useEffect(() => {
-    if (status !== "placed" || !placedAt) return
+    if (status !== "placed" || !placedAt) return;
 
     const calculateTimeRemaining = () => {
-      const placementDateTime = new Date(placedAt)
-      const endDateTime = new Date(placementDateTime)
-      endDateTime.setDate(endDateTime.getDate() + 30)
+      const endDateTime = new Date(placedAt);
+      endDateTime.setDate(endDateTime.getDate() + 30);
 
-      const now = new Date()
-      const diffTime = endDateTime.getTime() - now.getTime()
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-      const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const now = new Date();
+      const diffTime = endDateTime.getTime() - now.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(
+        (diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
 
-      setRemainingDays(diffDays)
-      setRemainingHours(diffHours)
-    }
+      setRemainingDays(diffDays);
+      setRemainingHours(diffHours);
+    };
 
-    calculateTimeRemaining()
-    const timer = setInterval(calculateTimeRemaining, 60000) // Update every minute
+    calculateTimeRemaining();
+    const timer = setInterval(calculateTimeRemaining, 60000); // Update every minute
 
-    return () => clearInterval(timer)
-  }, [status, placedAt])
+    return () => clearInterval(timer);
+  }, [status, placedAt]);
 
   // Handle confirm placement
   const handleConfirmPlacement = () => {
-    setConfirmPlacementOpen(true)
-  }
+    setConfirmPlacementOpen(true);
+  };
 
   // Handle remove from playlist
   const handleRemoveFromPlaylist = () => {
-    setConfirmRemovalOpen(true)
-  }
+    setConfirmRemovalOpen(true);
+  };
 
   return (
     <div className="relative flex flex-col sm:flex-row border rounded-lg bg-white glow-card animate-fade-in p-4 gap-4">
@@ -85,29 +86,26 @@ export function PlacementCard({
             status === "accepted"
               ? "outline"
               : status === "placed"
-                ? "secondary"
-                : status === "closed"
-                  ? "outline"
-                  : "outline"
+              ? "secondary"
+              : status === "closed"
+              ? "outline"
+              : "outline"
           }
           className={`
             px-3 py-1 text-xs font-medium rounded-full
             ${status === "placed" ? "bg-secondary/70 text-primary" : ""}
             ${status === "closed" ? "bg-muted text-muted-foreground" : ""}
-            ${status === "accepted" ? "bg-blue-50 text-blue-700 border-blue-200" : ""}
-            ${status === "pending" ? "bg-muted text-muted-foreground" : ""}
-            ${status === "ended" ? "bg-muted text-muted-foreground" : ""}
-          `}
-        >
+            ${
+              status === "accepted"
+                ? "bg-blue-50 text-blue-700 border-blue-200"
+                : ""
+            }
+          `}>
           {status === "placed"
             ? "Placed"
-            : status === "closed"
-              ? "Closed"
-              : status === "accepted"
-                ? "Accepted"
-                : status === "pending"
-                  ? "Pending"
-                  : "Ended"}
+            : status === "accepted"
+            ? "Accepted"
+            : "Closed"}
         </Badge>
       </div>
 
@@ -126,15 +124,19 @@ export function PlacementCard({
           <h3 className="text-sm font-medium truncate pr-20">{trackName}</h3>
           <p className="text-xs text-muted-foreground truncate">{artistName}</p>
           {placedAt && status === "placed" && (
-            <p className="text-xs text-muted-foreground mt-1">Placed on: {new Date(placedAt).toLocaleDateString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Placed on: {new Date(placedAt).toLocaleDateString()}
+            </p>
           )}
           {removedAt && status === "closed" && (
-            <p className="text-xs text-muted-foreground mt-1">Removed on: {new Date(removedAt).toLocaleDateString()}</p>
-          )}
-          {placementDate && status !== "placed" && status !== "closed" && (
             <p className="text-xs text-muted-foreground mt-1">
-              {status === "placed" ? "Placed on: " : "Ended on: "}
-              {status === "placed" ? placementDate : endDate}
+              Removed on: {new Date(removedAt).toLocaleDateString()}
+            </p>
+          )}
+          {placedAt && status !== "placed" && status !== "closed" && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {"Ended on: "}
+              {endDate}
             </p>
           )}
         </div>
@@ -150,7 +152,9 @@ export function PlacementCard({
           <div className="flex items-center gap-2 mt-2">
             <Clock className="h-3.5 w-3.5 text-primary" />
             <div className="flex items-center gap-1">
-              <Badge variant="outline" className="bg-secondary/20 text-primary border-secondary">
+              <Badge
+                variant="outline"
+                className="bg-secondary/20 text-primary border-secondary">
                 {remainingDays}d {remainingHours}h remaining
               </Badge>
             </div>
@@ -163,8 +167,7 @@ export function PlacementCard({
         {status === "accepted" && (
           <Button
             onClick={handleConfirmPlacement}
-            className="h-9 bg-primary hover:bg-primary/90 flex items-center gap-1 glow-button"
-          >
+            className="h-9 bg-primary hover:bg-primary/90 flex items-center gap-1 glow-button">
             <Check className="h-4 w-4" />
             Confirm Placement
           </Button>
@@ -174,8 +177,7 @@ export function PlacementCard({
           <Button
             onClick={handleRemoveFromPlaylist}
             variant="outline"
-            className="h-9 border-destructive text-destructive hover:bg-destructive/10 flex items-center gap-1"
-          >
+            className="h-9 border-destructive text-destructive hover:bg-destructive/10 flex items-center gap-1">
             <X className="h-4 w-4" />
             Remove from Playlist
           </Button>
@@ -183,26 +185,22 @@ export function PlacementCard({
 
         {status === "closed" && (
           <div className="flex flex-col items-start gap-1">
-            <span className="text-xs text-muted-foreground">Removed from playlist on:</span>
-            <span className="text-sm font-medium">{removedAt ? new Date(removedAt).toLocaleDateString() : "N/A"}</span>
+            <span className="text-xs text-muted-foreground">
+              Removed from playlist on:
+            </span>
+            <span className="text-sm font-medium">
+              {removedAt ? new Date(removedAt).toLocaleDateString() : "N/A"}
+            </span>
           </div>
         )}
 
         {status === "pending" && (
           <Button
             onClick={() => onConfirmPlacement?.(id)}
-            className="h-9 bg-primary hover:bg-primary/90 flex items-center gap-1 glow-button"
-          >
+            className="h-9 bg-primary hover:bg-primary/90 flex items-center gap-1 glow-button">
             <Check className="h-4 w-4" />
             Confirm Placement
           </Button>
-        )}
-
-        {status === "ended" && (
-          <div className="flex flex-col items-start gap-1">
-            <span className="text-xs text-muted-foreground">Placement ended on:</span>
-            <span className="text-sm font-medium">{endDate}</span>
-          </div>
         )}
       </div>
 
@@ -215,7 +213,7 @@ export function PlacementCard({
         confirmText="Confirm Placement"
         onConfirm={async () => {
           if (onConfirmPlacement) {
-            await onConfirmPlacement(id)
+            await onConfirmPlacement(id);
           }
         }}
       />
@@ -229,10 +227,10 @@ export function PlacementCard({
         variant="destructive"
         onConfirm={async () => {
           if (onRemoveFromPlaylist) {
-            await onRemoveFromPlaylist(id)
+            await onRemoveFromPlaylist(id);
           }
         }}
       />
     </div>
-  )
+  );
 }

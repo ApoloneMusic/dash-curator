@@ -1,6 +1,5 @@
 "use client"
 
-import { Check, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -9,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Check, ChevronDown } from "lucide-react"
 
 type StatusOption = {
   value: string
