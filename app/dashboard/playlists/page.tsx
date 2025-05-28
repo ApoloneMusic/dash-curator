@@ -153,7 +153,12 @@ export default function PlaylistsPage() {
           if (artworkResult) {
             return {
               ...playlist,
-              artwork: artworkResult.artwork || playlist.artwork,
+              artwork:
+                artworkResult.artwork ||
+                playlist.artwork ||
+                fallbackArtworkImages[
+                  playlist.id % fallbackArtworkImages.length
+                ],
               tracks: artworkResult.tracks || playlist.tracks,
             };
           }
@@ -519,12 +524,7 @@ export default function PlaylistsPage() {
           {playlists.map((playlist) => (
             <PlaylistCard
               key={playlist.id}
-              artwork={
-                playlist.artwork ||
-                fallbackArtworkImages[
-                  playlist.id % fallbackArtworkImages.length
-                ]
-              }
+              artwork={playlist.artwork}
               name={playlist.playlistName}
               followers={playlist.saves}
               tracks={playlist.tracks ?? 0} // Random number of tracks for demo
