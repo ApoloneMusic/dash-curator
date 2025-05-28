@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Loader2 } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,28 +9,34 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 
 interface DeclinePitchModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  trackName: string
-  artistName: string
-  onDecline: (feedback: DeclineFeedback) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trackName: string;
+  artistName: string;
+  onDecline: (feedback: DeclineFeedback) => void;
 }
 
 export interface DeclineFeedback {
-  mainReason: string
-  recordingQuality: number
-  productionQuality: number
-  originality: number
-  comments?: string
+  mainReason: string;
+  recordingQuality: number;
+  productionQuality: number;
+  originality: number;
+  comments?: string;
 }
 
 const declineReasons = [
@@ -46,46 +52,52 @@ const declineReasons = [
   "Lyrics don't fit playlist audience",
   "Already full with similar tracks",
   "Other (optional comment below)",
-]
+];
 
-export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, onDecline }: DeclinePitchModalProps) {
+export function DeclinePitchModal({
+  open,
+  onOpenChange,
+  trackName,
+  artistName,
+  onDecline,
+}: DeclinePitchModalProps) {
   // Form state
-  const [mainReason, setMainReason] = useState<string>("")
-  const [recordingQuality, setRecordingQuality] = useState<number>(5)
-  const [productionQuality, setProductionQuality] = useState<number>(5)
-  const [originality, setOriginality] = useState<number>(5)
-  const [comments, setComments] = useState<string>("")
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [mainReason, setMainReason] = useState<string>("");
+  const [recordingQuality, setRecordingQuality] = useState<number>(5);
+  const [productionQuality, setProductionQuality] = useState<number>(5);
+  const [originality, setOriginality] = useState<number>(5);
+  const [comments, setComments] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Validation state
   const [errors, setErrors] = useState<{
-    mainReason?: boolean
-    recordingQuality?: boolean
-    productionQuality?: boolean
-    originality?: boolean
-  }>({})
+    mainReason?: boolean;
+    recordingQuality?: boolean;
+    productionQuality?: boolean;
+    originality?: boolean;
+  }>({});
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (!open) {
-      setMainReason("")
-      setRecordingQuality(5)
-      setProductionQuality(5)
-      setOriginality(5)
-      setComments("")
-      setErrors({})
-      setIsSubmitting(false)
+      setMainReason("");
+      setRecordingQuality(5);
+      setProductionQuality(5);
+      setOriginality(5);
+      setComments("");
+      setErrors({});
+      setIsSubmitting(false);
     }
-  }, [open])
+  }, [open]);
 
   // Get emoji based on rating
   const getRatingEmoji = (rating: number) => {
-    if (rating <= 2) return "😖"
-    if (rating <= 4) return "😕"
-    if (rating <= 6) return "😐"
-    if (rating <= 8) return "🙂"
-    return "😀"
-  }
+    if (rating <= 2) return "😖";
+    if (rating <= 4) return "😕";
+    if (rating <= 6) return "😐";
+    if (rating <= 8) return "🙂";
+    return "😀";
+  };
 
   // Validate form
   const validateForm = () => {
@@ -94,20 +106,20 @@ export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, o
       recordingQuality: false,
       productionQuality: false,
       originality: false,
-    }
+    };
 
-    setErrors(newErrors)
-    return !Object.values(newErrors).some(Boolean)
-  }
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(Boolean);
+  };
 
   // Handle form submission
   const handleSubmit = async () => {
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     onDecline({
       mainReason,
@@ -115,11 +127,11 @@ export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, o
       productionQuality,
       originality,
       comments,
-    })
+    });
 
-    setIsSubmitting(false)
-    onOpenChange(false)
-  }
+    setIsSubmitting(false);
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -134,13 +146,19 @@ export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, o
         <div className="space-y-6 py-4">
           {/* Main Reason Selection */}
           <div className="space-y-2">
-            <Label htmlFor="main-reason" className={cn(errors.mainReason && "text-destructive")}>
-              Main Reason for Decline <span className="text-destructive">*</span>
+            <Label
+              htmlFor="main-reason"
+              className={cn(errors.mainReason && "text-destructive")}
+            >
+              Main Reason for Decline{" "}
+              <span className="text-destructive">*</span>
             </Label>
             <Select value={mainReason} onValueChange={setMainReason}>
               <SelectTrigger
                 id="main-reason"
-                className={cn(errors.mainReason && "border-destructive ring-destructive")}
+                className={cn(
+                  errors.mainReason && "border-destructive ring-destructive"
+                )}
               >
                 <SelectValue placeholder="Select a reason" />
               </SelectTrigger>
@@ -152,13 +170,20 @@ export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, o
                 ))}
               </SelectContent>
             </Select>
-            {errors.mainReason && <p className="text-sm text-destructive">Please select a reason for declining</p>}
+            {errors.mainReason && (
+              <p className="text-sm text-destructive">
+                Please select a reason for declining
+              </p>
+            )}
           </div>
 
           {/* Recording Quality Rating */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="recording-quality" className={cn(errors.recordingQuality && "text-destructive")}>
+              <Label
+                htmlFor="recording-quality"
+                className={cn(errors.recordingQuality && "text-destructive")}
+              >
                 Recording Quality <span className="text-destructive">*</span>
               </Label>
               <span className="text-2xl" aria-hidden="true">
@@ -185,7 +210,10 @@ export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, o
           {/* Production Quality Rating */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="production-quality" className={cn(errors.productionQuality && "text-destructive")}>
+              <Label
+                htmlFor="production-quality"
+                className={cn(errors.productionQuality && "text-destructive")}
+              >
                 Production Quality <span className="text-destructive">*</span>
               </Label>
               <span className="text-2xl" aria-hidden="true">
@@ -212,8 +240,12 @@ export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, o
           {/* Originality/Uniqueness Rating */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="originality" className={cn(errors.originality && "text-destructive")}>
-                Originality/Uniqueness <span className="text-destructive">*</span>
+              <Label
+                htmlFor="originality"
+                className={cn(errors.originality && "text-destructive")}
+              >
+                Originality/Uniqueness{" "}
+                <span className="text-destructive">*</span>
               </Label>
               <span className="text-2xl" aria-hidden="true">
                 {getRatingEmoji(originality)}
@@ -250,10 +282,18 @@ export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, o
         </div>
 
         <DialogFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="bg-destructive hover:bg-destructive/90" disabled={isSubmitting}>
+          <Button
+            onClick={handleSubmit}
+            className="bg-destructive hover:bg-destructive/90"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -266,5 +306,5 @@ export function DeclinePitchModal({ open, onOpenChange, trackName, artistName, o
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

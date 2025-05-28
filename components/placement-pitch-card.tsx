@@ -1,30 +1,30 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Check, ExternalLink, Music, X } from "lucide-react"
-import { SpotifyEmbed } from "./spotify-embed"
-import { ConfirmPlacementModal } from "./confirm-placement-modal"
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Check, ExternalLink, Music, X } from "lucide-react";
+import { SpotifyEmbed } from "./spotify-embed";
+import { ConfirmPlacementModal } from "./confirm-placement-modal";
 
 interface PlaylistInfo {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 interface PlacementPitchCardProps {
-  id: number
-  artwork: string
-  trackName: string
-  artistName: string
-  status: "accepted" | "placed" | "closed"
-  submissionDate: string
-  spotifyUrl: string
-  playlists: PlaylistInfo[]
-  campaignId: number
-  onConfirmPlacement: (id: number) => Promise<void>
-  onRemoveFromPlaylist: (id: number) => Promise<void>
+  id: number;
+  artwork: string;
+  trackName: string;
+  artistName: string;
+  status: "accepted" | "placed" | "closed";
+  submissionDate: string;
+  spotifyUrl: string;
+  playlists: PlaylistInfo[];
+  campaignId: number;
+  onConfirmPlacement: (id: number) => Promise<void>;
+  onRemoveFromPlaylist: (id: number) => Promise<void>;
 }
 
 export function PlacementPitchCard({
@@ -40,42 +40,47 @@ export function PlacementPitchCard({
   onConfirmPlacement,
   onRemoveFromPlaylist,
 }: PlacementPitchCardProps) {
-  const [confirmPlacementOpen, setConfirmPlacementOpen] = useState(false)
-  const [confirmRemovalOpen, setConfirmRemovalOpen] = useState(false)
+  const [confirmPlacementOpen, setConfirmPlacementOpen] = useState(false);
+  const [confirmRemovalOpen, setConfirmRemovalOpen] = useState(false);
 
   // Get status badge styling
   const getStatusBadgeStyle = () => {
     switch (status) {
       case "accepted":
-        return "bg-blue-50 text-blue-700 border-blue-200"
+        return "bg-blue-50 text-blue-700 border-blue-200";
       case "placed":
-        return "bg-green-50 text-green-700 border-green-200"
+        return "bg-green-50 text-green-700 border-green-200";
       case "closed":
-        return "bg-red-50 text-red-700 border-red-200"
+        return "bg-red-50 text-red-700 border-red-200";
       default:
-        return "bg-gray-50 text-gray-700 border-gray-200"
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
-  }
+  };
 
   // Get status display text
   const getStatusText = () => {
     switch (status) {
       case "accepted":
-        return "Accepted"
+        return "Accepted";
       case "placed":
-        return "Placed"
+        return "Placed";
       case "closed":
-        return "Closed"
+        return "Closed";
+      case "pitched":
+        return "Pitched";
       default:
-        return "Unknown"
+        return "Unknown";
     }
-  }
+  };
 
   return (
     <Card className="relative border rounded-lg bg-white shadow-sm p-6">
       {/* Status badge in the top right corner */}
       <div className="absolute top-4 right-4">
-        <Badge variant="outline" className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadgeStyle()}`}>
+        <Badge
+          variant="outline"
+          className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadgeStyle()}`}
+        >
           {getStatusText()}
         </Badge>
       </div>
@@ -111,7 +116,9 @@ export function PlacementPitchCard({
         </div>
 
         {playlists.length === 0 ? (
-          <p className="text-sm text-gray-500">No playlists associated with this pitch.</p>
+          <p className="text-sm text-gray-500">
+            No playlists associated with this pitch.
+          </p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {playlists.map((playlist) => (
@@ -173,7 +180,7 @@ export function PlacementPitchCard({
         description="Only confirm if the track is placed in the playlist. Confirmation of placement before placement is a violation of terms."
         confirmText="Confirm Placement"
         onConfirm={async () => {
-          await onConfirmPlacement(id)
+          await onConfirmPlacement(id);
         }}
       />
 
@@ -185,9 +192,9 @@ export function PlacementPitchCard({
         confirmText="Confirm Removal"
         variant="destructive"
         onConfirm={async () => {
-          await onRemoveFromPlaylist(id)
+          await onRemoveFromPlaylist(id);
         }}
       />
     </Card>
-  )
+  );
 }

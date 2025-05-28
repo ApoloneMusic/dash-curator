@@ -1,42 +1,42 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Check, ExternalLink, Music, X } from "lucide-react"
-import { DeclinePitchModal, type DeclineFeedback } from "./decline-pitch-modal"
-import { SpotifyEmbed } from "./spotify-embed"
-import { AcceptPitchModal } from "./accept-pitch-modal"
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Check, ExternalLink, Music, X } from "lucide-react";
+import { DeclinePitchModal, type DeclineFeedback } from "./decline-pitch-modal";
+import { SpotifyEmbed } from "./spotify-embed";
+import { AcceptPitchModal } from "./accept-pitch-modal";
 
 interface Genre {
-  name: string
-  isMatch?: boolean
+  name: string;
+  isMatch?: boolean;
 }
 
 interface AssociatedPlaylist {
-  id: number
-  name: string
-  genres: Genre[]
+  id: number;
+  name: string;
+  genres: Genre[];
 }
 
 interface PitchCardProps {
-  id: number
-  artwork: string
-  trackName: string
-  artistName: string
-  status: "pitched" | "accepted" | "declined"
-  submissionDate: string
-  genres: { name: string; isMatch?: boolean }[]
-  subgenres: { name: string; isMatch?: boolean }[]
-  spotifyUrl: string
+  id: number;
+  artwork: string;
+  trackName: string;
+  artistName: string;
+  status: "pitched" | "accepted" | "declined" | "placed";
+  submissionDate: string;
+  genres: { name: string; isMatch?: boolean }[];
+  subgenres: { name: string; isMatch?: boolean }[];
+  spotifyUrl: string;
   associatedPlaylists: {
-    id: number
-    name: string
-    genres: { name: string; isMatch?: boolean }[]
-  }[]
-  onDecline: (feedback: DeclineFeedback) => void
-  onAccept: () => void
-  campaignsId: number
+    id: number;
+    name: string;
+    genres: { name: string; isMatch?: boolean }[];
+  }[];
+  onDecline: (feedback: DeclineFeedback) => void;
+  onAccept: (campaignsId: number, selectedPlaylists: number[]) => Promise<void>;
+  campaignsId: number;
 }
 
 export function PitchCard({
@@ -54,54 +54,55 @@ export function PitchCard({
   onAccept,
   campaignsId,
 }: PitchCardProps) {
-  const [declineModalOpen, setDeclineModalOpen] = useState(false)
-  const [acceptModalOpen, setAcceptModalOpen] = useState(false)
+  const [declineModalOpen, setDeclineModalOpen] = useState(false);
+  const [acceptModalOpen, setAcceptModalOpen] = useState(false);
 
   const handleDecline = (feedback: DeclineFeedback) => {
     if (onDecline) {
-      onDecline(feedback)
+      onDecline(feedback);
     }
-  }
-
-  const handleAccept = () => {
-    if (onAccept) {
-      onAccept()
-    }
-  }
+  };
 
   // Get status badge styling
   const getStatusBadgeStyle = () => {
     switch (status) {
       case "pitched":
-        return "bg-blue-50 text-blue-700 border-blue-200"
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      case "placed":
+        return "bg-green-50 text-green-700 border-green-200";
       case "accepted":
-        return "bg-green-50 text-green-700 border-green-200"
+        return "bg-blue-50 text-blue-700 border-blue-200";
       case "declined":
-        return "bg-red-50 text-red-700 border-red-200"
+        return "bg-red-50 text-red-700 border-red-200";
       default:
-        return "bg-gray-50 text-gray-700 border-gray-200"
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
-  }
+  };
 
   // Get status display text
   const getStatusText = () => {
     switch (status) {
       case "pitched":
-        return "Pending"
+        return "Pending";
+      case "placed":
+        return "Placed";
       case "accepted":
-        return "Accepted"
+        return "Accepted";
       case "declined":
-        return "Declined"
+        return "Declined";
       default:
-        return "Unknown"
+        return "Unknown";
     }
-  }
+  };
 
   return (
     <div className="relative border rounded-lg bg-white shadow-sm p-6">
       {/* Status badge in the top right corner */}
       <div className="absolute top-4 right-4">
-        <Badge variant="outline" className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadgeStyle()}`}>
+        <Badge
+          variant="outline"
+          className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadgeStyle()}`}
+        >
           {getStatusText()}
         </Badge>
       </div>
@@ -133,14 +134,18 @@ export function PitchCard({
                   key={`genre-${index}`}
                   variant="outline"
                   className={`text-sm px-3 py-1 rounded-full ${
-                    genre.isMatch ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-600"
+                    genre.isMatch
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : "bg-gray-50 text-gray-600"
                   }`}
                 >
                   {genre.name}
                 </Badge>
               ))
             ) : (
-              <span className="text-sm text-gray-400 italic">No genre information available</span>
+              <span className="text-sm text-gray-400 italic">
+                No genre information available
+              </span>
             )}
           </div>
         </div>
@@ -148,20 +153,25 @@ export function PitchCard({
         <div>
           <p className="text-sm font-medium text-gray-500 mb-2">Subgenres</p>
           <div className="flex flex-wrap gap-2">
-            {subgenres.length > 0 && !subgenres[0].name.startsWith("No Subgenre") ? (
+            {subgenres.length > 0 &&
+            !subgenres[0].name.startsWith("No Subgenre") ? (
               subgenres.map((subgenre, index) => (
                 <Badge
                   key={`subgenre-${index}`}
                   variant="outline"
                   className={`text-sm px-3 py-1 rounded-full ${
-                    subgenre.isMatch ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-600"
+                    subgenre.isMatch
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : "bg-gray-50 text-gray-600"
                   }`}
                 >
                   {subgenre.name}
                 </Badge>
               ))
             ) : (
-              <span className="text-sm text-gray-400 italic">No subgenre information available</span>
+              <span className="text-sm text-gray-400 italic">
+                No subgenre information available
+              </span>
             )}
           </div>
         </div>
@@ -182,7 +192,9 @@ export function PitchCard({
         </div>
 
         {associatedPlaylists.length === 0 ? (
-          <p className="text-sm text-gray-500">No playlists associated with this pitch.</p>
+          <p className="text-sm text-gray-500">
+            No playlists associated with this pitch.
+          </p>
         ) : (
           <div className="space-y-3">
             {associatedPlaylists.map((playlist) => (
@@ -262,5 +274,5 @@ export function PitchCard({
         campaignsId={campaignsId}
       />
     </div>
-  )
+  );
 }
