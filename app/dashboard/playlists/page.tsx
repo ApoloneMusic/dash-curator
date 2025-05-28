@@ -527,7 +527,7 @@ export default function PlaylistsPage() {
               }
               name={playlist.playlistName}
               followers={playlist.saves}
-              tracks={Math.floor(Math.random() * 50) + 10} // Random number of tracks for demo
+              tracks={playlist.tracks ?? 0} // Random number of tracks for demo
               status={
                 playlist.status as
                   | "active"

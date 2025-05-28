@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Edit, ExternalLink, Music } from "lucide-react"
+import { useState } from "react"
 
 interface PlaylistCardProps {
   artwork?: string
@@ -17,36 +17,22 @@ interface PlaylistCardProps {
 
 export function PlaylistCard({ artwork, name, followers, tracks, status, onEdit, playlistUrl }: PlaylistCardProps) {
   const [imageError, setImageError] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Reset loading state when artwork changes
-  useEffect(() => {
-    setIsLoading(true)
-    setImageError(false)
-  }, [artwork])
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border rounded-lg bg-white glow-card animate-fade-in">
       <div className="relative flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-muted/30">
         {artwork && !imageError ? (
           <img
-            src={artwork || "/placeholder.svg"}
+            src={artwork}
             alt={name}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
-            onLoad={() => setIsLoading(false)}
-            onError={() => {
-              setImageError(true)
-              setIsLoading(false)
-            }}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover bg-muted/30"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted/50">
             <Music className="h-8 w-8 text-muted-foreground/50" />
-          </div>
-        )}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted/30">
-            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
           </div>
         )}
       </div>
