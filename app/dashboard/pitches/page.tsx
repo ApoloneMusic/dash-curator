@@ -292,8 +292,8 @@ export default function PitchesPage() {
 
           const artworkUrl = trackDetails.album.images[0].url;
 
-          // Update the campaign in the database
-          const response = await fetch(
+          // Update the campaign in the background
+          fetch(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/campaigns/${pitch.campaigns_id}`,
             {
               method: "PATCH",
@@ -305,12 +305,6 @@ export default function PitchesPage() {
               }),
             }
           );
-
-          if (!response.ok) {
-            throw new Error(
-              `Failed to update campaign artwork: ${response.status}`
-            );
-          }
 
           return {
             campaignId: pitch.campaigns_id,

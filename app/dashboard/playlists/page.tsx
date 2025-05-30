@@ -141,8 +141,8 @@ export default function PlaylistsPage() {
             saves: spotifyPlaylist.followers.total,
           };
 
-          // Update the database with the new data
-          const response = await fetch(
+          // Update the database with the new data in background
+          fetch(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/playlists/${playlist.id}`,
             {
               method: "PATCH",
@@ -152,12 +152,6 @@ export default function PlaylistsPage() {
               body: JSON.stringify(updatedData),
             }
           );
-
-          if (!response.ok) {
-            throw new Error(
-              `Failed to update playlist data: ${response.status}`
-            );
-          }
 
           return {
             id: playlist.id,
