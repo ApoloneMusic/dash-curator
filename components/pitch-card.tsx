@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, ExternalLink, Music, X } from "lucide-react";
+import { useState } from "react";
+import { AcceptPitchModal } from "./accept-pitch-modal";
 import { DeclinePitchModal, type DeclineFeedback } from "./decline-pitch-modal";
 import { SpotifyEmbed } from "./spotify-embed";
-import { AcceptPitchModal } from "./accept-pitch-modal";
 
 interface Genre {
   name: string;
@@ -21,11 +21,11 @@ interface AssociatedPlaylist {
 
 interface PitchCardProps {
   id: number;
-  artwork: string;
+  artwork?: string;
   trackName: string;
   artistName: string;
   status: "pitched" | "accepted" | "declined" | "placed";
-  submissionDate: string;
+  created_at: string;
   genres: { name: string; isMatch?: boolean }[];
   subgenres: { name: string; isMatch?: boolean }[];
   spotifyUrl: string;
@@ -45,7 +45,7 @@ export function PitchCard({
   trackName,
   artistName,
   status,
-  submissionDate,
+  created_at,
   genres,
   subgenres,
   spotifyUrl,
@@ -101,8 +101,7 @@ export function PitchCard({
       <div className="absolute top-4 right-4">
         <Badge
           variant="outline"
-          className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadgeStyle()}`}
-        >
+          className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadgeStyle()}`}>
           {getStatusText()}
         </Badge>
       </div>
@@ -119,7 +118,14 @@ export function PitchCard({
         <div className="flex-1 min-w-0 pr-24">
           <h3 className="text-xl font-semibold truncate">{trackName}</h3>
           <p className="text-gray-600 text-base mb-1">{artistName}</p>
-          <p className="text-sm text-gray-500">Submitted: {submissionDate}</p>
+          <p className="text-sm text-gray-500">
+            Submitted:{" "}
+            {new Date(created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
         </div>
       </div>
 
@@ -137,8 +143,7 @@ export function PitchCard({
                     genre.isMatch
                       ? "bg-green-50 text-green-700 border-green-200"
                       : "bg-gray-50 text-gray-600"
-                  }`}
-                >
+                  }`}>
                   {genre.name}
                 </Badge>
               ))
@@ -163,8 +168,7 @@ export function PitchCard({
                     subgenre.isMatch
                       ? "bg-green-50 text-green-700 border-green-200"
                       : "bg-gray-50 text-gray-600"
-                  }`}
-                >
+                  }`}>
                   {subgenre.name}
                 </Badge>
               ))
@@ -205,8 +209,7 @@ export function PitchCard({
                     <Badge
                       key={`playlist-genre-${playlist.id}-${index}`}
                       variant="outline"
-                      className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
-                    >
+                      className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                       {genre.name}
                     </Badge>
                   ))}
@@ -223,8 +226,7 @@ export function PitchCard({
               href={spotifyUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-sm text-primary hover:underline"
-            >
+              className="flex items-center gap-1 text-sm text-primary hover:underline">
               <ExternalLink className="h-4 w-4" />
               Open in Spotify
             </a>
@@ -238,15 +240,13 @@ export function PitchCard({
           <Button
             variant="outline"
             className="px-4 py-2 text-sm flex items-center gap-1 border-red-200 text-red-700 hover:bg-red-50"
-            onClick={() => setDeclineModalOpen(true)}
-          >
+            onClick={() => setDeclineModalOpen(true)}>
             <X className="h-4 w-4" />
             Decline
           </Button>
           <Button
             className="px-4 py-2 text-sm bg-green-700 hover:bg-green-800 text-white flex items-center gap-1"
-            onClick={() => setAcceptModalOpen(true)}
-          >
+            onClick={() => setAcceptModalOpen(true)}>
             <Check className="h-4 w-4" />
             Accept
           </Button>

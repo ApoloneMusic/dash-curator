@@ -105,18 +105,20 @@ export function PlacementPitchCard({
         <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden">
           <img
             src={
-              placement.artwork ||
+              placement.campaigns.artwork ||
               "/placeholder.svg?height=64&width=64&query=music"
             }
-            alt={`${placement.trackName} by ${placement.artistName}`}
+            alt={`${placement.campaigns.trackName} by ${placement.campaigns.artistName}`}
             className="w-full h-full object-cover"
           />
         </div>
         <div className="flex-1 min-w-0 pr-24">
           <h3 className="text-xl font-semibold truncate">
-            {placement.trackName}
+            {placement.campaigns.trackName}
           </h3>
-          <p className="text-gray-600 text-base mb-1">{placement.artistName}</p>
+          <p className="text-gray-600 text-base mb-1">
+            {placement.campaigns.artistName}
+          </p>
           {
             <p className="text-sm text-gray-500">
               {placement.status === "accepted"
@@ -132,9 +134,9 @@ export function PlacementPitchCard({
       </div>
 
       {/* Spotify Embed */}
-      {placement.trackUrl && (
+      {placement.campaigns.trackUrl && (
         <div className="mb-6">
-          <SpotifyEmbed spotifyUrl={placement.trackUrl} />
+          <SpotifyEmbed spotifyUrl={placement.campaigns.trackUrl} />
         </div>
       )}
 
@@ -177,10 +179,10 @@ export function PlacementPitchCard({
           )}
 
         {/* Spotify Link */}
-        {placement.trackUrl && (
+        {placement.campaigns.trackUrl && (
           <div className="mt-3 flex justify-end">
             <a
-              href={placement.trackUrl}
+              href={placement.campaigns.trackUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-sm text-primary hover:underline">
@@ -228,7 +230,19 @@ export function PlacementPitchCard({
         open={confirmRemovalOpen}
         onOpenChange={setConfirmRemovalOpen}
         title="Confirm Track Removal"
-        description="Make sure that you first confirm removal, then remove from the Spotify playlist. Removal prior to confirmation violates Terms."
+        description={`Make sure that you first confirm removal, then remove from the Spotify playlist. Removal prior to confirmation violates Terms.${
+          remainingDays > 0 || remainingHours > 0
+            ? `\n<div class="text-red-600 mt-2">Note: This track still has ${remainingDays} day${
+                remainingDays !== 1 ? "s" : ""
+              }${
+                remainingHours > 0
+                  ? ` and ${remainingHours} hour${
+                      remainingHours !== 1 ? "s" : ""
+                    }`
+                  : ""
+              } remaining in its placement period. Early removal may affect your curator rating.</div>`
+            : ""
+        }`}
         confirmText="Confirm Removal"
         variant="destructive"
         onConfirm={async () => {
