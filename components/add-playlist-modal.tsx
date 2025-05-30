@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Check, ExternalLink, Loader2, Search, User, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -10,21 +11,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/hooks/use-toast";
 import {
   spotifyService,
-  type SpotifyProfile,
   type SpotifyPlaylist,
+  type SpotifyProfile,
 } from "@/lib/spotify-service";
+import { cn } from "@/lib/utils";
+import { Check, ExternalLink, Loader2, Search, User, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 // Define interfaces for our data
 interface Genre {
@@ -372,6 +372,7 @@ export function AddPlaylistModal({
         curators_id: Number(user.id),
         playlistName: selectedPlaylist.name,
         playlistUrl: selectedPlaylist.external_urls.spotify,
+        artwork: selectedPlaylist.images[0]?.url,
         description: description.trim(),
         saves: saves, // Use the manually entered value
         tier: tier, // Default tier
@@ -379,7 +380,7 @@ export function AddPlaylistModal({
         score: 0, // Default score
         genres: genreIds,
         subgenres: subgenreIds,
-        updatedAt: Date.now(),
+        track_count: selectedPlaylist.tracks.total,
       };
 
       // Send POST request to API
@@ -477,16 +478,14 @@ export function AddPlaylistModal({
                       size="icon"
                       variant="ghost"
                       className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground"
-                      onClick={() => setProfileIdQuery("")}
-                    >
+                      onClick={() => setProfileIdQuery("")}>
                       <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
                 <Button
                   onClick={handleProfileSearch}
-                  disabled={isSearchingProfile || !profileIdQuery.trim()}
-                >
+                  disabled={isSearchingProfile || !profileIdQuery.trim()}>
                   {isSearchingProfile ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -531,8 +530,7 @@ export function AddPlaylistModal({
                     href={selectedProfile.external_urls.spotify}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-primary"
-                  >
+                    className="text-muted-foreground hover:text-primary">
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </div>
@@ -566,8 +564,7 @@ export function AddPlaylistModal({
                             ? "border-primary bg-primary/5"
                             : "hover:bg-muted/50"
                         )}
-                        onClick={() => handlePlaylistSelect(playlist)}
-                      >
+                        onClick={() => handlePlaylistSelect(playlist)}>
                         <div className="h-12 w-12 overflow-hidden rounded-md">
                           <img
                             src={
@@ -634,8 +631,7 @@ export function AddPlaylistModal({
             <div className="space-y-2">
               <Label
                 htmlFor="description"
-                className={errors.description ? "text-destructive" : ""}
-              >
+                className={errors.description ? "text-destructive" : ""}>
                 Playlist Description <span className="text-destructive">*</span>
               </Label>
               <Textarea
@@ -682,8 +678,7 @@ export function AddPlaylistModal({
                             ? "border-primary bg-primary/5"
                             : "hover:bg-muted/50"
                         )}
-                        onClick={() => toggleGenre(genre.name)}
-                      >
+                        onClick={() => toggleGenre(genre.name)}>
                         <Checkbox
                           checked={selectedGenres.includes(genre.name)}
                           onCheckedChange={() => toggleGenre(genre.name)}
@@ -691,8 +686,7 @@ export function AddPlaylistModal({
                         />
                         <Label
                           htmlFor={`genre-${genre.id}`}
-                          className="text-sm cursor-pointer"
-                        >
+                          className="text-sm cursor-pointer">
                           {genre.name}
                         </Label>
                       </div>
@@ -710,8 +704,7 @@ export function AddPlaylistModal({
                         onClick={(e) => {
                           e.preventDefault();
                           toggleGenre(genre);
-                        }}
-                      >
+                        }}>
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
@@ -743,8 +736,7 @@ export function AddPlaylistModal({
                                   ? "border-primary bg-primary/5"
                                   : "hover:bg-muted/50"
                               )}
-                              onClick={() => toggleSubgenre(subgenre.name)}
-                            >
+                              onClick={() => toggleSubgenre(subgenre.name)}>
                               <Checkbox
                                 checked={selectedSubgenres.includes(
                                   subgenre.name
@@ -756,8 +748,7 @@ export function AddPlaylistModal({
                               />
                               <Label
                                 htmlFor={`subgenre-${subgenre.id}`}
-                                className="text-sm cursor-pointer"
-                              >
+                                className="text-sm cursor-pointer">
                                 {subgenre.name}
                               </Label>
                             </div>
@@ -776,16 +767,14 @@ export function AddPlaylistModal({
                         <Badge
                           key={subgenre}
                           variant="outline"
-                          className="text-xs"
-                        >
+                          className="text-xs">
                           {subgenre}
                           <button
                             className="ml-1 text-muted-foreground hover:text-foreground"
                             onClick={(e) => {
                               e.preventDefault();
                               toggleSubgenre(subgenre);
-                            }}
-                          >
+                            }}>
                             <X className="h-3 w-3" />
                           </button>
                         </Badge>
@@ -821,8 +810,7 @@ export function AddPlaylistModal({
             <Button
               onClick={handleGetPlaylistData}
               className="bg-primary hover:bg-primary/90"
-              disabled={!selectedPlaylist}
-            >
+              disabled={!selectedPlaylist}>
               Next
             </Button>
           ) : (
@@ -834,8 +822,7 @@ export function AddPlaylistModal({
                 selectedSubgenres.length === 0 ||
                 !description.trim() ||
                 isSubmitting
-              }
-            >
+              }>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
