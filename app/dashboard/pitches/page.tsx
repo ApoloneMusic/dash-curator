@@ -9,6 +9,7 @@ import {
 import { PitchCard } from "@/components/pitch-card";
 import { PlacementPitchCard } from "@/components/placement-pitch-card";
 import { StatusFilter } from "@/components/status-filter";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -94,7 +95,7 @@ interface EnhancedPitch extends Pitch {
 }
 
 export interface EnhancedPlacement extends EnhancedPitch {
-  daysRemaining?: number;
+  hoursRemaining?: number;
 }
 
 export default function PitchesPage() {
@@ -507,6 +508,23 @@ export default function PitchesPage() {
       .filter(
         (pitch) => pitch.status === "accepted" || pitch.status === "placed"
       )
+      .map(pitch => {
+        // Calculate hours remaining for placed pitches
+        let hoursRemaining: number | undefined;
+        if (pitch.status === "placed" && pitch.placedAt) {
+          const endDateTime = new Date(pitch.placedAt);
+          endDateTime.setDate(endDateTime.getDate() + 30); // 30 days placement period
+          
+          const now = new Date();
+          const diffTime = endDateTime.getTime() - now.getTime();
+          hoursRemaining = Math.floor(diffTime / (1000 * 60 * 60)); // Convert to hours
+        }
+
+        return {
+          ...pitch,
+          hoursRemaining
+        };
+      })
       .sort((a, b) => {
         if (!a || !b) return 0;
         // Sort by status priority: accepted first, then placed
@@ -519,6 +537,24 @@ export default function PitchesPage() {
         );
       });
   }, [pitches]);
+
+  // Calculate counts for badges
+  const pitchCount = useMemo(() => {
+    return filteredPitches.filter((pitch) => pitch.status === "pitched").length;
+  }, [filteredPitches]);
+
+  const placementCount = useMemo(() => {
+    return pitchPlacements.filter((placement) => {
+      // Include accepted pitches
+      if (placement.status === "accepted") return true;
+      // For placed pitches, only include those that have reached their end time
+      if (placement.status === "placed") {
+        // If hoursRemaining is undefined or <= 0, the placement has ended
+        return !placement.hoursRemaining || placement.hoursRemaining <= 0;
+      }
+      return false;
+    }).length;
+  }, [pitchPlacements]);
 
   // Handle confirm placement
   const handleConfirmPlacement = async (id: number) => {
@@ -966,11 +1002,21 @@ export default function PitchesPage() {
         onValueChange={setActiveTab}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <TabsList className="grid w-full md:w-[600px] grid-cols-2">
-            <TabsTrigger value="pitches" className="tab-animation">
+            <TabsTrigger value="pitches" className="tab-animation relative">
               Your Pitches
+              {pitchCount > 0 && (
+                <Badge variant="secondary" className="ml-2 px-2 py-0.5 text-xs">
+                  {pitchCount}
+                </Badge>
+              )}
             </TabsTrigger>
-            <TabsTrigger value="placements" className="tab-animation">
+            <TabsTrigger value="placements" className="tab-animation relative">
               Placements
+              {placementCount > 0 && (
+                <Badge variant="secondary" className="ml-2 px-2 py-0.5 text-xs">
+                  {placementCount}
+                </Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
