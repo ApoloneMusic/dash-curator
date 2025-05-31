@@ -508,13 +508,13 @@ export default function PitchesPage() {
       .filter(
         (pitch) => pitch.status === "accepted" || pitch.status === "placed"
       )
-      .map(pitch => {
+      .map((pitch) => {
         // Calculate hours remaining for placed pitches
         let hoursRemaining: number | undefined;
         if (pitch.status === "placed" && pitch.placedAt) {
           const endDateTime = new Date(pitch.placedAt);
           endDateTime.setDate(endDateTime.getDate() + 30); // 30 days placement period
-          
+
           const now = new Date();
           const diffTime = endDateTime.getTime() - now.getTime();
           hoursRemaining = Math.floor(diffTime / (1000 * 60 * 60)); // Convert to hours
@@ -522,7 +522,7 @@ export default function PitchesPage() {
 
         return {
           ...pitch,
-          hoursRemaining
+          hoursRemaining,
         };
       })
       .sort((a, b) => {
@@ -1001,19 +1001,19 @@ export default function PitchesPage() {
         className="w-full"
         onValueChange={setActiveTab}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-          <TabsList className="grid w-full md:w-[600px] grid-cols-2">
-            <TabsTrigger value="pitches" className="tab-animation relative">
-              Your Pitches
+          <TabsList className="grid w-full md:w-[600px] grid-cols-2 h-14">
+            <TabsTrigger value="pitches" className="tab-animation relative text-base font-semibold px-6 py-3 data-[state=active]:bg-[#104700] data-[state=active]:text-white hover:bg-[#0d3a00] hover:text-white">
+              Review submissions
               {pitchCount > 0 && (
-                <Badge variant="secondary" className="ml-2 px-2 py-0.5 text-xs">
+                <Badge variant="secondary" className="ml-2 px-2.5 py-0.5 text-sm font-medium">
                   {pitchCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="placements" className="tab-animation relative">
-              Placements
+            <TabsTrigger value="placements" className="tab-animation relative text-base font-semibold px-6 py-3 data-[state=active]:bg-[#104700] data-[state=active]:text-white hover:bg-[#0d3a00] hover:text-white">
+              Confirm Placements
               {placementCount > 0 && (
-                <Badge variant="secondary" className="ml-2 px-2 py-0.5 text-xs">
+                <Badge variant="secondary" className="ml-2 px-2.5 py-0.5 text-sm font-medium">
                   {placementCount}
                 </Badge>
               )}
@@ -1038,9 +1038,9 @@ export default function PitchesPage() {
         <div className="mt-4 flex justify-end">
           <Link
             href="/dashboard/playlists"
-            className="flex items-center text-sm font-medium text-primary hover:underline">
-            <ListMusic className="mr-2 h-4 w-4" />
-            View Your Playlists
+            className="inline-flex items-center px-6 py-3 bg-[#ea4e2f] hover:bg-[#d44526] text-white font-medium text-base rounded-md shadow-sm transition-colors">
+            <ListMusic className="mr-2 h-5 w-5" />
+            YOUR PLAYLISTS
           </Link>
         </div>
 

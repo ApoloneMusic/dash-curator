@@ -1,8 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import Link from "next/link"
-import { Coins, Menu, X, LogOut, User } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,15 +10,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
-import { ProfileSettingsModal } from "@/components/profile-settings-modal"
+import { cn } from "@/lib/utils"
+import { Coins, LogOut, Menu, X } from "lucide-react"
+import Link from "next/link"
+import { useState } from "react"
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { user, logout } = useAuth()
-  const [profileModalOpen, setProfileModalOpen] = useState(false)
 
   // Get user initials for avatar fallback
   const getInitials = () => {
@@ -73,12 +71,6 @@ export function Header() {
                 <span>{user?.credits || 0} credits</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2" onClick={() => setProfileModalOpen(true)}>
-                <User className="h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuSeparator />
               <DropdownMenuItem className="flex items-center gap-2" onClick={() => logout()}>
                 <LogOut className="h-4 w-4" />
                 <span>Log out</span>
@@ -117,9 +109,6 @@ export function Header() {
           </button>
         </div>
       </div>
-
-      {/* Profile Settings Modal */}
-      <ProfileSettingsModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
     </header>
   )
 }
