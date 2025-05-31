@@ -144,9 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "You have successfully logged in",
       })
 
-      // Refresh user data (fetch current user) before redirecting
-      await refreshUser()
-
       // Enhanced redirection
       console.log("Redirecting to dashboard...")
       safeRedirect("/dashboard/pitches")
@@ -211,9 +208,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Account created",
         description: "Your account has been successfully created",
       })
-
-      // Refresh user data (fetch current user) before redirecting
-      await refreshUser()
 
       // Enhanced redirection
       console.log("Redirecting to dashboard...")

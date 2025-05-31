@@ -108,7 +108,7 @@ export default function PitchesPage() {
     null
   );
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   // State for data
   const [pitches, setPitches] = useState<EnhancedPitch[]>([]);
@@ -611,6 +611,9 @@ export default function PitchesPage() {
         );
       }
 
+      // Refresh user data to update credits
+      await refreshUser();
+
       // Show success toast
       toast({
         title: "Placement Confirmed",
@@ -816,6 +819,9 @@ export default function PitchesPage() {
         )
       );
 
+      // Refresh user data to update credits
+      await refreshUser();
+
       // Show success toast
       toast({
         title: "Pitch Declined",
@@ -881,6 +887,9 @@ export default function PitchesPage() {
 
       // Update local state
       refreshData();
+
+      // Refresh user data to update credits
+      await refreshUser();
 
       // Show success toast
       toast({
