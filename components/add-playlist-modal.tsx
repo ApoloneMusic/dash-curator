@@ -97,7 +97,7 @@ export function AddPlaylistModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State for API errors
-  const [apiError, setApiError] = useState<string | null>(null);
+  // const [apiError, setApiError] = useState<string | null>(null);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -112,7 +112,7 @@ export function AddPlaylistModal({
       setDescription("");
       setSavesCount("");
       setErrors({});
-      setApiError(null);
+      // setApiError(null);
     }
   }, [open]);
 
@@ -161,7 +161,7 @@ export function AddPlaylistModal({
     setIsSearchingProfile(true);
     setSelectedProfile(null);
     setProfilePlaylists([]);
-    setApiError(null);
+    // setApiError(null);
 
     try {
       const profile = await spotifyService.getProfileById(
@@ -189,7 +189,6 @@ export function AddPlaylistModal({
           ? error.message
           : "Failed to search Spotify profile. Please try again.";
 
-      setApiError(errorMessage);
       toast({
         title: "Search Error",
         description: errorMessage,
@@ -222,7 +221,6 @@ export function AddPlaylistModal({
           ? error.message
           : "Failed to load playlists for this profile. Please try again.";
 
-      setApiError(errorMessage);
       toast({
         title: "Error",
         description: errorMessage,
@@ -315,7 +313,6 @@ export function AddPlaylistModal({
           ? error.message
           : "Failed to load playlists for this profile. Please try again.";
 
-      setApiError(errorMessage);
       toast({
         title: "Error",
         description: errorMessage,
@@ -343,7 +340,7 @@ export function AddPlaylistModal({
     if (!validateStep() || !user || !selectedPlaylist) return;
 
     setIsSubmitting(true);
-    setApiError(null);
+    // setApiError(null);
 
     try {
       // Find genre IDs from names
@@ -416,11 +413,11 @@ export function AddPlaylistModal({
       }
     } catch (error) {
       console.error("Error adding playlist:", error);
-      setApiError(
-        error instanceof Error
-          ? error.message
-          : "Failed to add playlist. Please try again."
-      );
+      // setApiError(
+      //   error instanceof Error
+      //     ? error.message
+      //     : "Failed to add playlist. Please try again."
+      // );
       toast({
         title: "Error",
         description:
@@ -448,12 +445,12 @@ export function AddPlaylistModal({
           </DialogDescription>
         </DialogHeader>
 
-        {apiError && (
+        {/* {apiError && (
           <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm mb-4 border border-destructive/20">
             <p className="font-medium mb-1">Error</p>
             <p>{apiError}</p>
           </div>
-        )}
+        )} */}
 
         {/* Step 1: Search for profiles */}
         {step === 1 && (
