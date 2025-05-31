@@ -161,18 +161,30 @@ export function AddPlaylistModal({
     setIsSearchingProfile(true);
     setSelectedProfile(null);
     setProfilePlaylists([]);
-    // setApiError(null);
+    setSelectedPlaylist(null);
+    setDescription("");
 
     try {
-      const profile = await spotifyService.getProfileById(
-        profileIdQuery.trim()
-      );
+      // Extract profile ID from URL if a full Spotify URL is provided
+      let profileId = profileIdQuery.trim();
+      let isUrl = false;
+      // Handle different Spotify URL formats
+      if (profileId.includes("spotify.com")) {
+        isUrl = true;
+        const urlParts = profileId.split("/");
+        const lastPart = urlParts[urlParts.length - 1];
+        // Remove any query parameters
+        profileId = lastPart.split("?")[0];
+      }
+
+      const profile = await spotifyService.getProfileById(profileId);
 
       if (!profile) {
         toast({
           title: "Profile not found",
-          description:
-            "No Spotify profile found with that ID. Please check the ID and try again.",
+          description: `No Spotify profile found with that ${
+            isUrl ? "URL" : "ID"
+          }. Please check and try again.`,
           variant: "destructive",
         });
         return;
@@ -303,8 +315,9 @@ export function AddPlaylistModal({
       const spotifyPlaylist = await spotifyService.getPlaylistByUrl(
         selectedPlaylist.href
       );
-      debugger;
       setSelectedPlaylist(spotifyPlaylist);
+      // Set the description from the playlist data
+      setDescription(spotifyPlaylist.description || "");
       handleNextStep();
     } catch (error) {
       console.error("Error loading playlists:", error);
@@ -359,7 +372,6 @@ export function AddPlaylistModal({
         })
         .filter((id) => id !== null) as number[];
 
-      // Use the manually entered saves count
       let saves = Number(selectedPlaylist.followers.total);
       saves = Math.abs(Math.round(saves));
       const tier = calculateTier(saves);
@@ -457,13 +469,13 @@ export function AddPlaylistModal({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="profile-id-search">
-                Enter Spotify Profile ID
+                Enter Spotify Profile ID or URL
               </Label>
               <div className="flex space-x-2">
                 <div className="relative flex-1">
                   <Input
                     id="profile-id-search"
-                    placeholder="Enter Spotify profile ID..."
+                    placeholder="Enter Spotify profile ID or URL..."
                     value={profileIdQuery}
                     onChange={(e) => setProfileIdQuery(e.target.value)}
                     onKeyDown={(e) =>
@@ -491,8 +503,8 @@ export function AddPlaylistModal({
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Enter the Spotify profile ID (e.g., "spotify" or "12345678") to
-                find a specific profile.
+                Enter a Spotify profile ID (e.g., "spotify") or full profile URL
+                (e.g., "https://open.spotify.com/user/spotify").
               </p>
             </div>
 
@@ -576,8 +588,7 @@ export function AddPlaylistModal({
                         <div className="flex-1">
                           <p className="text-sm font-medium">{playlist.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {playlist.tracks.total} tracks •{" "}
-                            {playlist.followers?.total || 0} saves
+                            {playlist.tracks.total} tracks
                           </p>
                         </div>
                         {selectedPlaylist?.id === playlist.id && (
