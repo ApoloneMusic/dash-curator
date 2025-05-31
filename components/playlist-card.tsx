@@ -1,22 +1,36 @@
-"use client"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Edit, ExternalLink, Music } from "lucide-react"
-import { useState } from "react"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit, ExternalLink, Music } from "lucide-react";
+import { useState } from "react";
 
 interface PlaylistCardProps {
-  artwork?: string
-  name: string
-  followers: number
-  tracks: number
-  status: "active" | "inactive" | "pending" | "archived" | "unverified" | "verified"
-  onEdit?: () => void
-  playlistUrl?: string
+  artwork?: string;
+  name: string;
+  followers: number;
+  tracks: number;
+  status:
+    | "active"
+    | "inactive"
+    | "pending"
+    | "archived"
+    | "unverified"
+    | "verified";
+  onEdit?: () => void;
+  playlistUrl?: string;
 }
 
-export function PlaylistCard({ artwork, name, followers, tracks, status, onEdit, playlistUrl }: PlaylistCardProps) {
-  const [imageError, setImageError] = useState(false)
+export function PlaylistCard({
+  artwork,
+  name,
+  followers,
+  tracks,
+  status,
+  onEdit,
+  playlistUrl,
+}: PlaylistCardProps) {
+  const [imageError, setImageError] = useState(false);
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border rounded-lg bg-white glow-card animate-fade-in">
@@ -47,17 +61,33 @@ export function PlaylistCard({ artwork, name, followers, tracks, status, onEdit,
                 status === "active" || status === "verified"
                   ? "secondary"
                   : status === "pending" || status === "unverified"
-                    ? "outline"
-                    : status === "inactive"
-                      ? "default"
-                      : "destructive"
+                  ? "outline"
+                  : status === "inactive"
+                  ? "default"
+                  : "destructive"
               }
               className={`
                 text-xs
-                ${status === "active" || status === "verified" ? "bg-secondary/70 text-primary" : ""}
-                ${status === "pending" || status === "unverified" ? "bg-muted text-muted-foreground" : ""}
-                ${status === "inactive" ? "bg-muted/50 text-muted-foreground" : ""}
-                ${status === "archived" ? "bg-destructive/10 text-destructive" : ""}
+                ${
+                  status === "active" || status === "verified"
+                    ? "bg-secondary/70 text-primary"
+                    : ""
+                }
+                ${
+                  status === "pending" || status === "unverified"
+                    ? "bg-muted text-muted-foreground"
+                    : ""
+                }
+                ${
+                  status === "inactive"
+                    ? "bg-muted/50 text-muted-foreground"
+                    : ""
+                }
+                ${
+                  status === "archived"
+                    ? "bg-destructive/10 text-destructive"
+                    : ""
+                }
               `}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -67,12 +97,19 @@ export function PlaylistCard({ artwork, name, followers, tracks, status, onEdit,
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-2">
           <div className="flex items-center gap-4">
-            <p className="text-xs text-muted-foreground">{followers.toLocaleString()} saves</p>
+            <p className="text-xs text-muted-foreground">
+              {followers.toLocaleString()} {`save${followers === 1 ? "" : "s"}`}
+            </p>
             <p className="text-xs text-muted-foreground">{tracks} tracks</p>
           </div>
 
           <div className="flex items-center gap-2 mt-2 sm:mt-0">
-            <Button size="sm" variant="outline" className="h-8 px-3 text-xs flex items-center gap-1" onClick={onEdit}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-3 text-xs flex items-center gap-1"
+              onClick={onEdit}
+            >
               <Edit className="h-3 w-3" />
               Edit
             </Button>
@@ -90,5 +127,5 @@ export function PlaylistCard({ artwork, name, followers, tracks, status, onEdit,
         </div>
       </div>
     </div>
-  )
+  );
 }

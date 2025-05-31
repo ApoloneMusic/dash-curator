@@ -1,9 +1,10 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
+import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/contexts/auth-context"
 import { debugEnvironment } from "@/lib/env-debug"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import type React from "react"
+import "./globals.css"
 
 // Debug environment variables in development
 if (typeof window !== "undefined") {
@@ -27,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   )

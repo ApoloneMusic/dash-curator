@@ -32,7 +32,7 @@ interface Playlist {
   playlistName: string;
   playlistUrl: string;
   description: string;
-  saves: number;
+  saves?: number | undefined;
   tier: number;
   status: string;
   score: number;
@@ -41,7 +41,7 @@ interface Playlist {
   updatedAt: number;
   created_at: number;
   artwork?: string;
-  tracks?: number;
+  track_count?: number;
 }
 
 export default function PlaylistsPage() {
@@ -114,29 +114,51 @@ export default function PlaylistsPage() {
     setIsLoadingArtwork(true);
 
     try {
+      // Filter playlists that need syncing (have undefined values)
+      const playlistsNeedingSync = playlistsToSync.filter(
+        (playlist) =>
+          playlist.playlistUrl &&
+          (!playlist.artwork ||
+            playlist.track_count == null ||
+            playlist.saves == null)
+      );
+
+      if (playlistsNeedingSync.length === 0) {
+        setIsLoadingArtwork(false);
+        return;
+      }
+
       // Create an array of promises for fetching artwork
-      const artworkPromises = playlistsToSync.map(async (playlist) => {
+      const artworkPromises = playlistsNeedingSync.map(async (playlist) => {
         try {
-          // Only fetch if the playlist has a URL and doesn't already have artwork
-          if (playlist.playlistUrl) {
-            const spotifyPlaylist = await spotifyService.getPlaylistByUrl(
-              playlist.playlistUrl
-            );
-            return {
-              id: playlist.id,
-              artwork:
-                spotifyPlaylist.images && spotifyPlaylist.images.length > 0
-                  ? spotifyPlaylist.images[0].url
-                  : undefined,
-              tracks: spotifyPlaylist.tracks.total,
-            };
-          }
-          return null;
-        } catch (error) {
-          console.error(
-            `Error fetching artwork for playlist ${playlist.id}:`,
-            error
+          const spotifyPlaylist = await spotifyService.getPlaylistByUrl(
+            playlist.playlistUrl
           );
+
+          const updatedData = {
+            artwork: spotifyPlaylist.images?.[0]?.url,
+            track_count: spotifyPlaylist.tracks.total,
+            saves: spotifyPlaylist.followers.total,
+          };
+
+          // Update the database with the new data in background
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/playlists/${playlist.id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(updatedData),
+            }
+          );
+
+          return {
+            id: playlist.id,
+            ...updatedData,
+          };
+        } catch (error) {
+          console.error(`Error syncing playlist ${playlist.id}:`, error);
           return null;
         }
       });
@@ -150,23 +172,27 @@ export default function PlaylistsPage() {
           const artworkResult = artworkResults.find(
             (result) => result && result.id === playlist.id
           );
-          if (artworkResult) {
-            return {
-              ...playlist,
-              artwork:
-                artworkResult.artwork ||
-                playlist.artwork ||
-                fallbackArtworkImages[
-                  playlist.id % fallbackArtworkImages.length
-                ],
-              tracks: artworkResult.tracks || playlist.tracks,
-            };
+          if (!artworkResult) {
+            return playlist;
           }
-          return playlist;
+          return {
+            ...playlist,
+            artwork:
+              artworkResult.artwork ||
+              playlist.artwork ||
+              fallbackArtworkImages[playlist.id % fallbackArtworkImages.length],
+            track_count: artworkResult.track_count ?? playlist.track_count,
+            saves: artworkResult.saves ?? playlist.saves,
+          };
         });
       });
     } catch (error) {
-      console.error("Error fetching playlist artwork:", error);
+      console.error("Error syncing playlists:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sync some playlists. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoadingArtwork(false);
     }
@@ -382,8 +408,8 @@ export default function PlaylistsPage() {
       artwork:
         playlist.artwork ||
         fallbackArtworkImages[playlist.id % fallbackArtworkImages.length],
-      followers: playlist.saves,
-      tracks: playlist.tracks ?? 0, // Random number of tracks for demo
+      followers: playlist.saves ?? 0,
+      tracks: playlist.track_count ?? 0,
       status: playlist.status,
       description: playlist.description,
       genres: genreNames,
@@ -419,23 +445,14 @@ export default function PlaylistsPage() {
         (playlist: Playlist) => playlist.curators_id === Number(user.id)
       );
 
-      // Preserve artwork for existing playlists
-      const updatedPlaylists = curatorPlaylists.map((newPlaylist: Playlist) => {
-        const existingPlaylist = playlists.find((p) => p.id === newPlaylist.id);
-        if (existingPlaylist && existingPlaylist.artwork) {
-          return { ...newPlaylist, artwork: existingPlaylist.artwork };
-        }
-        return newPlaylist;
-      });
+      setPlaylists(curatorPlaylists);
 
-      setPlaylists(updatedPlaylists);
-
-      // Fetch artwork for new playlists that don't have artwork yet
-      const playlistsNeedingArtwork = updatedPlaylists.filter(
-        (p: Playlist) => !p.artwork
+      // Only sync playlists that have undefined values
+      const playlistsNeedingSync = curatorPlaylists.filter(
+        (p: Playlist) => !p.artwork || !p.track_count || !p.saves
       );
-      if (playlistsNeedingArtwork.length > 0) {
-        syncPlaylists(playlistsNeedingArtwork);
+      if (playlistsNeedingSync.length > 0) {
+        syncPlaylists(playlistsNeedingSync);
       }
 
       toast({
@@ -526,8 +543,8 @@ export default function PlaylistsPage() {
               key={playlist.id}
               artwork={playlist.artwork}
               name={playlist.playlistName}
-              followers={playlist.saves}
-              tracks={playlist.tracks ?? 0} // Random number of tracks for demo
+              followers={playlist.saves ?? 0}
+              tracks={playlist.track_count ?? 0}
               status={
                 playlist.status as
                   | "active"

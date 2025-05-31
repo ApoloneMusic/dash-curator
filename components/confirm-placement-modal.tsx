@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +11,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface ConfirmPlacementModalProps {
   open: boolean;
@@ -66,7 +66,10 @@ export function ConfirmPlacementModal({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription 
+            dangerouslySetInnerHTML={{ __html: description }}
+            className="whitespace-pre-line"
+          />
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isSubmitting}>

@@ -164,92 +164,39 @@ export const authService = {
       console.log("Login response status:", response.status)
       const data = await handleResponse(response)
 
-      // Handle different response formats
-      // Case 1: API returns { user, token } format
-      if (data.user && data.token) {
-        console.log("API returned user and token format")
-        return data as AuthResponse
+      // Get the auth token from response
+      const token = data.authToken || data.token
+      if (!token) {
+        throw new Error("No auth token received from server")
       }
 
-      // Case 2: API returns { authToken } format
-      if (data.authToken) {
-        console.log("API returned authToken format")
-        const token = data.authToken
-
-        // Store token in localStorage first
-        try {
-          localStorage.setItem("auth_token", token)
-        } catch (e) {
-          console.warn("Error setting localStorage:", e)
-        }
-
-        // Create a default user based on the credentials
-        const defaultUser: User = {
-          id: "temp-id",
-          name: credentials.email.split("@")[0],
-          email: credentials.email,
-          role: "curator",
-          credits: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-
-        // Try to decode the token to get user information
-        const userFromToken = decodeToken(token)
-
-        // If we successfully decoded the token, use that user info
-        if (userFromToken) {
-          console.log("Successfully extracted user info from token")
-          return {
-            user: userFromToken,
-            token,
-          }
-        }
-
-        // If we couldn't extract user info from the token, try to fetch it from the /me endpoint
-        try {
-          console.log("Attempting to fetch user info from /me endpoint")
-          const userResponse = await fetch(`${API_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-
-          if (userResponse.ok) {
-            const userData = await userResponse.json()
-            console.log("User data from /me endpoint:", userData)
-
-            if (userData.user) {
-              return {
-                user: userData.user,
-                token,
-              }
-            } else if (userData.id && userData.email) {
-              return {
-                user: userData as User,
-                token,
-              }
-            }
-          } else {
-            console.warn("Failed to fetch user info from /me endpoint:", userResponse.status)
-          }
-        } catch (error) {
-          console.error("Error fetching user info from /me endpoint:", error)
-        }
-
-        // If all else fails, use the default user
-        console.log("Using default user info")
-        return {
-          user: defaultUser,
-          token,
-        }
+      // Store token in localStorage first
+      try {
+        localStorage.setItem("auth_token", token)
+      } catch (e) {
+        console.warn("Error setting localStorage:", e)
       }
 
-      // If we get here, the response format is not recognized
-      console.error("Invalid login response structure:", data)
-      throw new Error("Invalid response format from server")
+      // Always fetch fresh user data from /me endpoint
+      const userResponse = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!userResponse.ok) {
+        throw new Error("Failed to fetch user data after login")
+      }
+
+      const userData = await userResponse.json()
+      const user = userData.user || userData
+
+      if (!user || !user.id || !user.email) {
+        throw new Error("Invalid user data received from server")
+      }
+
+      return { user, token }
     } catch (error) {
-      // Enhanced error logging
       console.error("Login fetch error:", error)
 
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
@@ -289,92 +236,39 @@ export const authService = {
       console.log("Registration response status:", response.status)
       const data = await handleResponse(response)
 
-      // Handle different response formats
-      // Case 1: API returns { user, token } format
-      if (data.user && data.token) {
-        console.log("API returned user and token format")
-        return data as AuthResponse
+      // Get the auth token from response
+      const token = data.authToken || data.token
+      if (!token) {
+        throw new Error("No auth token received from server")
       }
 
-      // Case 2: API returns { authToken } format
-      if (data.authToken) {
-        console.log("API returned authToken format")
-        const token = data.authToken
-
-        // Store token in localStorage first
-        try {
-          localStorage.setItem("auth_token", token)
-        } catch (e) {
-          console.warn("Error setting localStorage:", e)
-        }
-
-        // Create a default user based on the credentials
-        const defaultUser: User = {
-          id: "temp-id",
-          name: credentials.name,
-          email: credentials.email,
-          role: "curator",
-          credits: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-
-        // Try to decode the token to get user information
-        const userFromToken = decodeToken(token)
-
-        // If we successfully decoded the token, use that user info
-        if (userFromToken) {
-          console.log("Successfully extracted user info from token")
-          return {
-            user: userFromToken,
-            token,
-          }
-        }
-
-        // If we couldn't extract user info from the token, try to fetch it from the /me endpoint
-        try {
-          console.log("Attempting to fetch user info from /me endpoint")
-          const userResponse = await fetch(`${API_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-
-          if (userResponse.ok) {
-            const userData = await userResponse.json()
-            console.log("User data from /me endpoint:", userData)
-
-            if (userData.user) {
-              return {
-                user: userData.user,
-                token,
-              }
-            } else if (userData.id && userData.email) {
-              return {
-                user: userData as User,
-                token,
-              }
-            }
-          } else {
-            console.warn("Failed to fetch user info from /me endpoint:", userResponse.status)
-          }
-        } catch (error) {
-          console.error("Error fetching user info from /me endpoint:", error)
-        }
-
-        // If all else fails, use the default user
-        console.log("Using default user info")
-        return {
-          user: defaultUser,
-          token,
-        }
+      // Store token in localStorage first
+      try {
+        localStorage.setItem("auth_token", token)
+      } catch (e) {
+        console.warn("Error setting localStorage:", e)
       }
 
-      // If we get here, the response format is not recognized
-      console.error("Invalid registration response structure:", data)
-      throw new Error("Invalid response format from server")
+      // Always fetch fresh user data from /me endpoint
+      const userResponse = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!userResponse.ok) {
+        throw new Error("Failed to fetch user data after registration")
+      }
+
+      const userData = await userResponse.json()
+      const user = userData.user || userData
+
+      if (!user || !user.id || !user.email) {
+        throw new Error("Invalid user data received from server")
+      }
+
+      return { user, token }
     } catch (error) {
-      // Enhanced error logging
       console.error("Registration fetch error:", error)
 
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
@@ -386,9 +280,9 @@ export const authService = {
     }
   },
 
-  // Get current user
+  // Get current user - always fetches fresh data from /auth/me
   async getCurrentUser(): Promise<User | null> {
-    console.log("Attempting to get current user")
+    console.log("Fetching current user data from API")
     console.log("Using API URL:", API_URL)
 
     try {
@@ -406,36 +300,11 @@ export const authService = {
         return null
       }
 
-      // Validate token format to prevent issues with malformed tokens
-      if (typeof token !== "string" || token.trim() === "") {
-        console.log("Invalid token format, clearing token")
-        try {
-          localStorage.removeItem("auth_token")
-          // Also clear the cookie for consistency
-          if (typeof document !== "undefined") {
-            document.cookie = "auth_token=; path=/; max-age=0"
-          }
-        } catch (e) {
-          console.warn("Error removing invalid token:", e)
-        }
-        return null
-      }
-
       // If API_URL is not available, use mock response
       if (!API_URL) {
         console.warn("API URL is not defined. Using mock getCurrentUser response.")
         return mockGetCurrentUser()
       }
-
-      // Try to decode the token to get user information
-      const userFromToken = decodeToken(token)
-      if (userFromToken) {
-        console.log("User info extracted from token")
-        return userFromToken
-      }
-
-      // If we couldn't extract user info from the token, fetch it from the API
-      console.log("Could not extract user info from token, fetching from API")
 
       // Construct the full URL for logging
       const fullUrl = `${API_URL}/auth/me`
@@ -453,7 +322,7 @@ export const authService = {
       console.log("getCurrentUser response status:", response.status)
 
       if (!response.ok) {
-        console.warn("Failed to get current user, status:", response.status)
+        console.warn("Failed to get current user data, status:", response.status)
         // Clear token if unauthorized
         if (response.status === 401) {
           try {

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -21,7 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface DeclinePitchModalProps {
   open: boolean;
@@ -69,12 +69,16 @@ export function DeclinePitchModal({
   const [comments, setComments] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // Track which sliders have been interacted with
+  const [interactedSliders, setInteractedSliders] = useState<Set<string>>(new Set());
+
   // Validation state
   const [errors, setErrors] = useState<{
     mainReason?: boolean;
     recordingQuality?: boolean;
     productionQuality?: boolean;
     originality?: boolean;
+    sliders?: boolean;
   }>({});
 
   // Reset form when modal opens/closes
@@ -87,8 +91,27 @@ export function DeclinePitchModal({
       setComments("");
       setErrors({});
       setIsSubmitting(false);
+      setInteractedSliders(new Set());
     }
   }, [open]);
+
+  // Track slider interactions
+  const handleSliderChange = (sliderId: string, value: number[]) => {
+    const newValue = value[0];
+    setInteractedSliders(prev => new Set([...prev, sliderId]));
+    
+    switch (sliderId) {
+      case "recording-quality":
+        setRecordingQuality(newValue);
+        break;
+      case "production-quality":
+        setProductionQuality(newValue);
+        break;
+      case "originality":
+        setOriginality(newValue);
+        break;
+    }
+  };
 
   // Get emoji based on rating
   const getRatingEmoji = (rating: number) => {
@@ -106,6 +129,7 @@ export function DeclinePitchModal({
       recordingQuality: false,
       productionQuality: false,
       originality: false,
+      sliders: interactedSliders.size < 3,
     };
 
     setErrors(newErrors);
@@ -178,11 +202,14 @@ export function DeclinePitchModal({
           </div>
 
           {/* Recording Quality Rating */}
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="recording-quality"
-                className={cn(errors.recordingQuality && "text-destructive")}
+                className={cn(
+                  errors.recordingQuality && "text-destructive",
+                  !interactedSliders.has("recording-quality") && "text-muted-foreground"
+                )}
               >
                 Recording Quality <span className="text-destructive">*</span>
               </Label>
@@ -197,8 +224,11 @@ export function DeclinePitchModal({
                 max={10}
                 step={1}
                 value={[recordingQuality]}
-                onValueChange={(value) => setRecordingQuality(value[0])}
-                className={cn(errors.recordingQuality && "border-destructive")}
+                onValueChange={(value) => handleSliderChange("recording-quality", value)}
+                className={cn(
+                  errors.recordingQuality && "border-destructive",
+                  !interactedSliders.has("recording-quality") && "opacity-50"
+                )}
               />
               <div className="flex justify-between mt-1">
                 <span className="text-xs text-muted-foreground">Poor</span>
@@ -208,11 +238,14 @@ export function DeclinePitchModal({
           </div>
 
           {/* Production Quality Rating */}
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="production-quality"
-                className={cn(errors.productionQuality && "text-destructive")}
+                className={cn(
+                  errors.productionQuality && "text-destructive",
+                  !interactedSliders.has("production-quality") && "text-muted-foreground"
+                )}
               >
                 Production Quality <span className="text-destructive">*</span>
               </Label>
@@ -227,8 +260,11 @@ export function DeclinePitchModal({
                 max={10}
                 step={1}
                 value={[productionQuality]}
-                onValueChange={(value) => setProductionQuality(value[0])}
-                className={cn(errors.productionQuality && "border-destructive")}
+                onValueChange={(value) => handleSliderChange("production-quality", value)}
+                className={cn(
+                  errors.productionQuality && "border-destructive",
+                  !interactedSliders.has("production-quality") && "opacity-50"
+                )}
               />
               <div className="flex justify-between mt-1">
                 <span className="text-xs text-muted-foreground">Poor</span>
@@ -238,11 +274,14 @@ export function DeclinePitchModal({
           </div>
 
           {/* Originality/Uniqueness Rating */}
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="originality"
-                className={cn(errors.originality && "text-destructive")}
+                className={cn(
+                  errors.originality && "text-destructive",
+                  !interactedSliders.has("originality") && "text-muted-foreground"
+                )}
               >
                 Originality/Uniqueness{" "}
                 <span className="text-destructive">*</span>
@@ -258,8 +297,11 @@ export function DeclinePitchModal({
                 max={10}
                 step={1}
                 value={[originality]}
-                onValueChange={(value) => setOriginality(value[0])}
-                className={cn(errors.originality && "border-destructive")}
+                onValueChange={(value) => handleSliderChange("originality", value)}
+                className={cn(
+                  errors.originality && "border-destructive",
+                  !interactedSliders.has("originality") && "opacity-50"
+                )}
               />
               <div className="flex justify-between mt-1">
                 <span className="text-xs text-muted-foreground">Generic</span>
@@ -267,6 +309,12 @@ export function DeclinePitchModal({
               </div>
             </div>
           </div>
+
+          {errors.sliders && (
+            <p className="text-sm text-destructive">
+              Please adjust all three rating sliders to provide comprehensive feedback
+            </p>
+          )}
 
           {/* Additional Comments */}
           <div className="space-y-2">

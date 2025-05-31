@@ -20,6 +20,7 @@ export interface SpotifyPlaylist {
   id: string;
   name: string;
   description: string;
+  href: string;
   images: { url: string; height: number | null; width: number | null }[];
   tracks: { total: number };
   external_urls: { spotify: string };
@@ -30,6 +31,15 @@ export interface SpotifyPlaylist {
   followers: {
     total: number;
   };
+}
+
+export interface SpotifyTrack {
+  id: string;
+  name: string;
+  album: {
+    images: { url: string; height: number | null; width: number | null }[];
+  };
+  external_urls: { spotify: string };
 }
 
 // Token storage
@@ -192,7 +202,6 @@ export const spotifyService = {
       }
 
       const data = await response.json();
-
       // Check if the response has the expected structure
       if (!data.items) {
         console.warn("Unexpected API response structure:", data);
@@ -346,6 +355,55 @@ export const spotifyService = {
       return data.playlists.items;
     } catch (error) {
       console.error("Error searching playlists:", error);
+      throw error;
+    }
+  },
+
+  // Get track details by ID
+  getTrackById: async (trackId: string): Promise<SpotifyTrack> => {
+    try {
+      const token = await spotifyService.getClientCredentialsToken();
+
+      const response = await fetch(
+        `${SPOTIFY_API_BASE_URL}/tracks/${trackId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        // Get the response text first
+        const errorText = await response.text();
+
+        // Try to parse as JSON, but handle the case where it's not valid JSON
+        let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          // Spotify API typically returns errors in this format
+          if (
+            errorData.error &&
+            typeof errorData.error === "object" &&
+            errorData.error.message
+          ) {
+            errorMessage = errorData.error.message;
+          } else if (errorData.error && typeof errorData.error === "string") {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          // If parsing fails, use the raw text
+          if (errorText) {
+            errorMessage = errorText;
+          }
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting track:", error);
       throw error;
     }
   },
