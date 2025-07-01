@@ -621,31 +621,31 @@ export default function PitchesPage() {
         );
       }
 
-      const curatorProfileRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/curators/${user?.id}`
-      );
+      // const curatorProfileRes = await fetch(
+      //   `${process.env.NEXT_PUBLIC_API_BASE_URL}/curators/${user?.id}`
+      // );
 
-      if (!curatorProfileRes.ok) {
-        const curatorProfileErrorRes = await curatorProfileRes.text();
-        console.error("Failed to get curator profile:", curatorProfileErrorRes);
-        // Don't throw an error here, as we've already updated the pitch status
-      } else {
-        const curatorProfileData = await curatorProfileRes.json();
-        await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/curators/${user?.id}`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              ...curatorProfileData,
-              credits: curatorProfileData.credits + 1,
-              accepted: curatorProfileData.accepted + 1,
-            }),
-          }
-        );
-      }
+      // if (!curatorProfileRes.ok) {
+      //   const curatorProfileErrorRes = await curatorProfileRes.text();
+      //   console.error("Failed to get curator profile:", curatorProfileErrorRes);
+      //   // Don't throw an error here, as we've already updated the pitch status
+      // } else {
+      //   const curatorProfileData = await curatorProfileRes.json();
+      //   await fetch(
+      //     `${process.env.NEXT_PUBLIC_API_BASE_URL}/curators/${user?.id}`,
+      //     {
+      //       method: "PATCH",
+      //       headers: {
+      //         "Content-Type": "application/json",
+      //       },
+      //       body: JSON.stringify({
+      //         ...curatorProfileData,
+      //         credits: curatorProfileData.credits + 1,
+      //         accepted: curatorProfileData.accepted + 1,
+      //       }),
+      //     }
+      //   );
+      // }
 
       // Refresh user data to update credits
       await refreshUser();
@@ -923,6 +923,32 @@ export default function PitchesPage() {
 
       // Update local state
       refreshData();
+
+      const curatorProfileRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/curators/${user?.id}`
+      );
+
+      if (!curatorProfileRes.ok) {
+        const curatorProfileErrorRes = await curatorProfileRes.text();
+        console.error("Failed to get curator profile:", curatorProfileErrorRes);
+        // Don't throw an error here, as we've already updated the pitch status
+      } else {
+        const curatorProfileData = await curatorProfileRes.json();
+        await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/curators/${user?.id}`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ...curatorProfileData,
+              credits: curatorProfileData.credits + 1,
+              accepted: curatorProfileData.accepted + 1,
+            }),
+          }
+        );
+      }
 
       // Refresh user data to update credits
       await refreshUser();
