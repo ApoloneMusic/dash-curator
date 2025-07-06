@@ -621,32 +621,6 @@ export default function PitchesPage() {
         );
       }
 
-      // const curatorProfileRes = await fetch(
-      //   `${process.env.NEXT_PUBLIC_API_BASE_URL}/curators/${user?.id}`
-      // );
-
-      // if (!curatorProfileRes.ok) {
-      //   const curatorProfileErrorRes = await curatorProfileRes.text();
-      //   console.error("Failed to get curator profile:", curatorProfileErrorRes);
-      //   // Don't throw an error here, as we've already updated the pitch status
-      // } else {
-      //   const curatorProfileData = await curatorProfileRes.json();
-      //   await fetch(
-      //     `${process.env.NEXT_PUBLIC_API_BASE_URL}/curators/${user?.id}`,
-      //     {
-      //       method: "PATCH",
-      //       headers: {
-      //         "Content-Type": "application/json",
-      //       },
-      //       body: JSON.stringify({
-      //         ...curatorProfileData,
-      //         credits: curatorProfileData.credits + 1,
-      //         accepted: curatorProfileData.accepted + 1,
-      //       }),
-      //     }
-      //   );
-      // }
-
       // Refresh user data to update credits
       await refreshUser();
 
@@ -1205,98 +1179,6 @@ export default function PitchesPage() {
                         .map(([status, count]) => `${status}: ${count}`)
                         .join(", ")}
                     </p>
-                    {/* <div className="mt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          // Force create demo data
-                          const demoPitches = [];
-                          const demoPlacements = [];
-
-                          for (let i = 0; i < 3; i++) {
-                            const campaignId = 1000 + i;
-                            const pitchId = 6000 + i;
-                            const statuses = ["accepted", "placed"];
-
-                            // Create a pitch for each status
-                            const status = statuses[i % statuses.length];
-
-                            // Create the pitch if it doesn't exist
-                            if (!pitches.some((p) => p.id === pitchId)) {
-                              demoPitches.push({
-                                id: pitchId,
-                                campaigns_id: campaignId,
-                                curators_id: Number(user.id),
-                                playlists_id: [i + 1, i + 2],
-                                status: status,
-                                submissionDate: new Date().toISOString(),
-                                trackName: `Demo Track ${i + 1}`,
-                                artistName: `Demo Artist ${i + 1}`,
-                                trackUrl:
-                                  "https://open.spotify.com/track/17phhZDn6oGtzMe56NuWvj",
-                                genre_id: 1,
-                                subgenre_ids: [],
-                                associatedPlaylists: [
-                                  {
-                                    id: i + 1,
-                                    name: `Demo Playlist ${i + 1}`,
-                                    genres: [
-                                      { name: "Demo Genre", isMatch: true },
-                                    ],
-                                  },
-                                  {
-                                    id: i + 2,
-                                    name: `Demo Playlist ${i + 2}`,
-                                    genres: [
-                                      { name: "Demo Genre", isMatch: true },
-                                    ],
-                                  },
-                                ],
-                                artwork:
-                                  artworkImages[i % artworkImages.length],
-                              });
-                            }
-
-                            // Create placements for each playlist
-                            for (let j = 0; j < 2; j++) {
-                              const playlistId = i + j + 1;
-
-                              demoPlacements.push({
-                                id: 5000 + i * 10 + j,
-                                pitches_id: pitchId,
-                                playlists_id: playlistId,
-                                status: status,
-                                placedAt:
-                                  status === "placed"
-                                    ? new Date().toISOString()
-                                    : undefined,
-                                trackName: `Demo Track ${i + 1}`,
-                                artistName: `Demo Artist ${i + 1}`,
-                                playlistName: `Demo Playlist ${playlistId}`,
-                                artwork:
-                                  artworkImages[i % artworkImages.length],
-                                daysRemaining:
-                                  status === "placed" ? 30 - j : undefined,
-                                campaigns_id: campaignId,
-                              });
-                            }
-                          }
-
-                          // Update state with new demo data
-                          setPitches((prev) => [...prev, ...demoPitches]);
-                          setPlacements((prev) => [...prev, ...demoPlacements]);
-
-                          toast({
-                            title: "Demo Data Created",
-                            description:
-                              "Created demo pitches and placements for testing",
-                          });
-                        }}
-                      >
-                        Create Demo Data
-                      </Button>
-                    </div> */}
                   </div>
                 </div>
               ) : (
