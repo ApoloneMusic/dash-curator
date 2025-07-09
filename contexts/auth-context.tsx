@@ -172,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Validate credentials before sending
-      if (!credentials.name || !credentials.email || !credentials.password) {
+      if (!credentials.name || !credentials.email || !credentials.password || !credentials.phone) {
         throw new Error("Missing required registration fields")
       }
 

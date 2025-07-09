@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/auth-context"
 import { motion } from "framer-motion"
+import { PhoneInput } from "react-international-phone"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Signup form schema with password requirements
 const signupSchema = z.object({
@@ -22,6 +24,10 @@ const signupSchema = z.object({
     .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
     .regex(/[0-9]/, { message: "Password must contain at least one number" })
     .regex(/[^A-Za-z0-9]/, { message: "Password must contain at least one special character" }),
+  phone: z
+    .string()
+    .min(1, { message: "Phone number is required" })
+    .regex(/^\+\d{10,15}$/, { message: "Phone number must be in international format (e.g. +1234567890)" }),
 })
 
 type FormState = {
@@ -29,13 +35,16 @@ type FormState = {
     name?: string[]
     email?: string[]
     password?: string[]
+    phone?: string[]
   }
   message?: string
 }
 
 export default function SignupPage() {
   const [formState, setFormState] = useState<FormState>({})
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
+  const [agreeToTerms, setAgreeToTerms] = useState(false)
   const { register, isLoading } = useAuth()
 
   // Password strength checks
@@ -52,9 +61,10 @@ export default function SignupPage() {
     const name = formData.get("name") as string
     const email = formData.get("email") as string
     const password = formData.get("password") as string
+    const phone = formData.get("phone") as string
 
     // Validate form fields
-    const result = signupSchema.safeParse({ name, email, password })
+    const result = signupSchema.safeParse({ name, email, password, phone })
 
     if (!result.success) {
       setFormState({
@@ -72,6 +82,7 @@ export default function SignupPage() {
         name: name.trim(),
         email: email.trim(),
         password,
+        phone
       })
     } catch (error) {
       console.error("Registration form submission error:", error)
@@ -216,6 +227,32 @@ export default function SignupPage() {
               </motion.div>
 
               <motion.div variants={itemVariants}>
+                <Label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                  Phone number
+                </Label>
+                <div className="mt-1">
+                  <PhoneInput
+                    defaultCountry="us"
+                    value={phone}
+                    onChange={(value) => setPhone(value)}
+                    inputClassName={`!h-12 w-full rounded-xl !border-gray-200 bg-white/50 backdrop-blur-sm transition-all focus:border-[#d7ff6e] focus:ring-[#d7ff6e] !rounded-r-xl ${
+                      formState.errors?.phone ? '!border-destructive' : ''
+                    }`}
+                    countrySelectorStyleProps={{
+                      buttonContentWrapperClassName: 'h-12 !rounded-l-xl !border-gray-200',
+                      buttonClassName: 'h-12 w-16 !rounded-l-xl !border-gray-200'
+                    }}
+                  />
+                  <input type="hidden" name="phone" value={phone} />
+                  {formState.errors?.phone?.map((error) => (
+                    <p key={error} className="mt-1 text-xs text-destructive">
+                      {error}
+                    </p>
+                  ))}
+                </div>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
                 <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </Label>
@@ -313,10 +350,22 @@ export default function SignupPage() {
               </motion.div>
 
               <motion.div variants={itemVariants}>
+                <Label htmlFor="terms" className="text-sm font-medium text-gray-700 mt-1 flex items-center gap-2 cursor-pointer">
+                  <Checkbox name="terms" checked={agreeToTerms} onCheckedChange={setAgreeToTerms} />
+                  <span>
+                    Agree to {' '}
+                    <Link href="/terms-and-conditions" className="inline font-medium text-[#104702] transition-colors hover:text-[#104702]/80">
+                      terms and conditions
+                    </Link>
+                  </span>
+                </Label>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
                 <Button
                   type="submit"
                   className="relative h-12 w-full overflow-hidden rounded-xl bg-[#ea4e2f] text-white transition-all hover:bg-[#ea4e2f]/90 focus:outline-none focus:ring-2 focus:ring-[#d7ff6e] focus:ring-offset-2"
-                  disabled={isLoading}
+                  disabled={isLoading || !agreeToTerms}
                 >
                   <span className="relative z-10 flex items-center justify-center">
                     {isLoading ? (
