@@ -10,6 +10,7 @@ export function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isApiRequest = request.nextUrl.pathname.startsWith("/api");
   const isRootPage = request.nextUrl.pathname === "/";
+  const routeWhitelist = ["/terms-and-conditions"]
 
   // Debug logging for production troubleshooting
   const environment = process.env.VERCEL_ENV || "development";
@@ -46,7 +47,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If accessing protected pages without token, redirect to login
-  if (!isAuthPage && !isApiRequest && !token && !isRootPage) {
+  if (!isAuthPage && !isApiRequest && !token && !isRootPage && !routeWhitelist.includes(request.nextUrl.pathname)) {
     // Check if we're already trying to access the login page to prevent redirection loops
     if (!request.nextUrl.pathname.includes("/auth/login")) {
       const redirectUrl = new URL("/auth/login", request.url);
