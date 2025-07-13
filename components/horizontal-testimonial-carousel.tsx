@@ -25,10 +25,9 @@ export function HorizontalTestimonialCarousel({ testimonials }: HorizontalTestim
     setCurrentIndex((prevIndex) => {
       if (direction === "right") {
         return (prevIndex + 1) % testimonials.length
-      } else {
-        // (prevIndex - 1 + testimonials.length) % testimonials.length handles negative results correctly
-        return (prevIndex - 1 + testimonials.length) % testimonials.length
       }
+
+      return (prevIndex - 1 + testimonials.length) % testimonials.length
     })
   }
 

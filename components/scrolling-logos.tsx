@@ -32,7 +32,7 @@ const logos = [
 ]
 
 export function ScrollingLogos() {
-  const duplicatedLogos = [...logos, ...logos]
+  logos.push(...logos)
 
   return (
     <div className="relative w-full py-12 overflow-hidden bg-white">
@@ -41,7 +41,7 @@ export function ScrollingLogos() {
         <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white to-transparent" />
       </div>
       <div className="w-max flex animate-scroll-left">
-        {duplicatedLogos.map((logo, index) => (
+        {logos.map((logo, index) => (
           <div key={index} className="flex-shrink-0 w-48 flex items-center justify-center mx-[0.1rem] sm:mx-2">
             <Image
               src={logo.src || "/placeholder.svg"}

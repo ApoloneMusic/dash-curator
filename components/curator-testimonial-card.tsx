@@ -1,5 +1,3 @@
-"use client"
-// Removed: import { motion, useInView } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle } from "lucide-react"
 
@@ -11,17 +9,9 @@ interface CuratorTestimonialCardProps {
 }
 
 export function CuratorTestimonialCard({ quote, playlistName, followers, delay }: CuratorTestimonialCardProps) {
-  // Removed: const ref = useRef(null)
-  // Removed: const isInView = useInView(ref, { once: true, amount: 0.5 })
 
   return (
-    <div // Changed from motion.div to div
-      // Removed: ref={ref}
-      // Removed: initial={{ opacity: 0, y: 50 }}
-      // Removed: animate={isInView ? { opacity: 1, y: 0 } : {}}
-      // Removed: transition={{ duration: 0.6, delay: delay }}
-      className="h-full"
-    >
+    <div className="h-full">
       <Card className="h-full flex flex-col justify-between p-6 bg-white/20 backdrop-blur-lg border border-brand-lime/30 shadow-lg rounded-xl hover:shadow-xl transition-shadow duration-300">
         <CardContent className="p-0">
           <p className="text-lg text-brand-green leading-relaxed mb-4">&ldquo;{quote}&rdquo;</p>
