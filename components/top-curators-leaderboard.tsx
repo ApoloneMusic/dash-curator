@@ -28,7 +28,7 @@ const curators: CuratorData[] = [
     badge: "gold",
     description: "Highest payout, top priority on future campaigns",
     pfpColor: "from-purple-400 to-pink-400",
-    pfpImage: "/pfps/lofi-king.jpeg",
+    pfpImage: "/pfps/lofi-king.jpeg/",
   },
   {
     rank: 2,
@@ -38,7 +38,7 @@ const curators: CuratorData[] = [
     badge: "silver",
     description: "Premium campaign invites + increased payout rates",
     pfpColor: "from-blue-400 to-cyan-400",
-    pfpImage: "/pfps/indie-muse.jpeg",
+    pfpImage: "/pfps/indie-muse.jpeg/",
   },
   {
     rank: 3,
@@ -48,7 +48,7 @@ const curators: CuratorData[] = [
     badge: "bronze",
     description: "Early access to high-paying review drops",
     pfpColor: "from-orange-400 to-red-400",
-    pfpImage: "/pfps/trap-wavez.jpeg",
+    pfpImage: "/pfps/trap-wavez.jpeg/",
   },
   {
     rank: 4,
@@ -76,7 +76,7 @@ const curators: CuratorData[] = [
     badge: "honorable",
     description: "VIP curator perks",
     pfpColor: "from-yellow-400 to-orange-400",
-    pfpImage: "/pfps/jazz-temple.jpeg",
+    pfpImage: "/pfps/jazz-temple.jpeg/",
   },
   {
     rank: 7,
@@ -86,7 +86,7 @@ const curators: CuratorData[] = [
     badge: "honorable",
     description: "VIP curator perks",
     pfpColor: "from-pink-400 to-rose-400",
-    pfpImage: "/pfps/rnb-selects.jpeg",
+    pfpImage: "/pfps/rnb-selects.jpeg/",
   },
   {
     rank: 8,
@@ -96,7 +96,7 @@ const curators: CuratorData[] = [
     badge: "honorable",
     description: "VIP curator perks",
     pfpColor: "from-teal-400 to-blue-400",
-    pfpImage: "/pfps/synth-lord.png",
+    pfpImage: "/pfps/synth-lord.png/",
   },
   {
     rank: 9,
@@ -106,7 +106,7 @@ const curators: CuratorData[] = [
     badge: "honorable",
     description: "VIP curator perks",
     pfpColor: "from-red-400 to-pink-400",
-    pfpImage: "/pfps/rap-radar.jpeg",
+    pfpImage: "/pfps/rap-radar.jpeg/",
   },
   {
     rank: 10,
@@ -116,7 +116,7 @@ const curators: CuratorData[] = [
     badge: "honorable",
     description: "VIP curator perks",
     pfpColor: "from-cyan-400 to-teal-400",
-    pfpImage: "/pfps/global-grooves.jpeg",
+    pfpImage: "/pfps/global-grooves.jpeg/",
   },
 ]
 
@@ -198,7 +198,7 @@ const ProfilePicture = ({
       {pfpImage ? (
         <div className="w-10 h-10 rounded-full overflow-hidden shadow-sm">
           <Image
-            src={pfpImage || "/placeholder.svg"}
+            src={pfpImage ?? "/placeholder.svg"}
             alt={`${username} profile`}
             width={40}
             height={40}

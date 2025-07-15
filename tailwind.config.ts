@@ -78,11 +78,16 @@ const config = {
           "0%, 100%": { boxShadow: "0 0 15px rgba(217, 255, 112, 0.5)" },
           "50%": { boxShadow: "0 0 25px rgba(217, 255, 112, 0.8)" },
         },
+        "scroll-left": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 2s infinite",
+        "scroll-left": "scroll-left 60s linear infinite",
       },
     },
   },

@@ -75,14 +75,11 @@ export function middleware(request: NextRequest) {
 // See "Matching Paths" below to learn more
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)",
+    // Match all paths except:
+    // - static files (_next/static, _next/image)
+    // - favicon
+    // - public image assets (common formats)
+    // - /pfps/* images
+    '/((?!_next/static|_next/image|favicon.ico|pfps/|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.svg$|.*\\.webp$|.*\\.gif$|.*\\.ico$).*)',
   ],
 };
